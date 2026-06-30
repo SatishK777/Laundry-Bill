@@ -907,4 +907,16 @@ input:focus, select:focus {
     width: 15%;
     text-align: right;
   }
+  .all-bills-print-container .receipt-card {
+    page-break-after: always;
+    break-after: page;
+    margin-bottom: 0 !important;
+    border: 1px solid black !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+  }
+  .all-bills-print-container .receipt-card:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
 }

@@ -137,6 +137,8 @@ export default function App() {
   const [expandedDates, setExpandedDates] = useState({});
   const [summaryMonth, setSummaryMonth] = useState("");
   const [summaryEntries, setSummaryEntries] = useState([]);
+  const [billsList, setBillsList] = useState([]);
+  const [billMode, setBillMode] = useState("single");
 
   const apiGet = async (path) => {
     const res = await fetch(path);
@@ -288,8 +290,96 @@ export default function App() {
 
   const handleGenerateBill = async () => {
     if (!billLaundry || !billMonth) return;
-    const data = await apiGet(`/api/bill?laundryId=${billLaundry}&month=${billMonth}`);
-    setBill(data);
+    try {
+      const data = await apiGet(`/api/bill?laundryId=${billLaundry}&month=${billMonth}`);
+      setBill(data);
+      setBillMode("single");
+      setBillsList([]);
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed to generate bill / बिल बनाने में विफल",
+        text: err.message || "Could not connect to database / डेटाबेस से कनेक्ट नहीं हो सका",
+      });
+    }
+  };
+
+  const handleGenerateAllBills = async () => {
+    if (!billMonth) return;
+    try {
+      const entries = await apiGet(`/api/entries?month=${billMonth}`);
+      const list = [];
+
+      for (const customer of customers) {
+        const custEntries = entries.filter((e) => e.laundryId === customer._id);
+        if (custEntries.length === 0) continue;
+
+        let commonQty = 0;
+        const itemTotals = {};
+
+        custEntries.forEach((e) => {
+          commonQty += Number(e.commonQty || 0);
+          if (e.items) {
+            Object.entries(e.items || {}).forEach(([id, qty]) => {
+              itemTotals[id] = (itemTotals[id] || 0) + Number(qty || 0);
+            });
+          }
+        });
+
+        const rows = [];
+        let totalAmount = 0;
+
+        if (commonQty > 0 && common) {
+          const amount = commonQty * Number(common.rate || 0);
+          totalAmount += amount;
+          rows.push({ name: "Common", qty: commonQty, amount });
+        }
+
+        rates.forEach((item) => {
+          const qty = itemTotals[item._id] || 0;
+          if (qty > 0) {
+            const amount = qty * Number(item.rate || 0);
+            totalAmount += amount;
+            rows.push({ name: `${item.en} (${item.hi})`, qty, amount });
+          }
+        });
+
+        list.push({
+          customer: customer.name,
+          month: billMonth,
+          rows,
+          totalAmount,
+        });
+      }
+
+      if (list.length === 0) {
+        Swal.fire({
+          icon: "info",
+          title: "No entries found / कोई एंट्री नहीं मिली",
+          text: "इस महीने के लिए कोई एंट्री उपलब्ध नहीं है",
+        });
+        return;
+      }
+
+      setBillsList(list);
+      setBillMode("all");
+      setBill(null);
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: `Generated ${list.length} bills / ${list.length} बिल तैयार किए गए`,
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed to generate bills / बिल बनाने में विफल",
+        text: err.message || "Could not connect to database / डेटाबेस से कनेक्ट नहीं हो सका",
+      });
+    }
   };
 
   const handleAddCustomer = async () => {
@@ -757,12 +847,18 @@ export default function App() {
             onChange={(e) => setBillMonth(e.target.value)}
           />
 
-          <button className="primary full" onClick={handleGenerateBill}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-            Generate Bill / बिल बनाएं
-          </button>
+          <div className="button-grid">
+            <button className="primary" onClick={handleGenerateBill}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+              One Customer / एक ग्राहक
+            </button>
+            <button className="secondary" onClick={handleGenerateAllBills}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              All Customers / सभी एक साथ
+            </button>
+          </div>
 
-          {bill && (
+          {billMode === "single" && bill && (
             <div className="receipt-card">
               <div className="bill-header">
                 <div className="bill-title">OM GANESHAY NAMAH</div>
@@ -794,6 +890,50 @@ export default function App() {
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Print Receipt / प्रिंट करें
               </button>
+            </div>
+          )}
+
+          {billMode === "all" && billsList.length > 0 && (
+            <div style={{ marginTop: 20 }}>
+              <div className="no-print" style={{ marginBottom: 12 }}>
+                <button className="primary full" onClick={() => window.print()}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  Print All Bills ({billsList.length}) / सभी प्रिंट करें
+                </button>
+              </div>
+              
+              <div className="all-bills-print-container">
+                {billsList.map((singleBill, idx) => (
+                  <div className="receipt-card" key={`all-bills-${idx}`} style={{ marginBottom: 20 }}>
+                    <div className="bill-header">
+                      <div className="bill-title">OM GANESHAY NAMAH</div>
+                      <div className="bill-sub">Laundry Bill / लॉन्ड्री बिल</div>
+                    </div>
+                    <div className="bill-meta">
+                      <div>
+                        <span><strong>Customer:</strong> {singleBill.customer}</span>
+                        <span><strong>Month:</strong> {singleBill.month}</span>
+                      </div>
+                      <div className="bill-meta-right">
+                        <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>
+                        <span><strong>Bill ID:</strong> L-{singleBill.customer.slice(0, 3).toUpperCase()}-{singleBill.month.replace("-", "")}</span>
+                      </div>
+                    </div>
+                    <div className="bill-table">
+                      {singleBill.rows.map((r, i) => (
+                        <div className="bill-row" key={`${r.name}-${i}`}>
+                          <div>{r.name}</div>
+                          <div>Qty: {r.qty}</div>
+                          <div>{money(r.amount)}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="bill-total">
+                      Total / कुल: {money(singleBill.totalAmount)}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </section>
