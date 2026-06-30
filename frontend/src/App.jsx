@@ -294,19 +294,34 @@ export default function App() {
 
   const handleAddCustomer = async () => {
     const name = newLaundryName.trim();
-    if (!name) return;
-    await apiPost("/api/customers", { name });
-    setNewLaundryName("");
-    await loadBaseData();
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "success",
-      title: "Customer added / ग्राहक जुड़ गया",
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true,
-    });
+    if (!name) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Name / नाम गायब है",
+        text: "Please enter customer name / कृपया ग्राहक का नाम दर्ज करें",
+      });
+      return;
+    }
+    try {
+      await apiPost("/api/customers", { name });
+      setNewLaundryName("");
+      await loadBaseData();
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Customer added / ग्राहक जुड़ गया",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed to add customer / ग्राहक जोड़ने में विफल",
+        text: err.message || "Could not connect to database / डेटाबेस से कनेक्ट नहीं हो सका",
+      });
+    }
   };
 
   const handleDeleteCustomer = async (id) => {
@@ -350,23 +365,38 @@ export default function App() {
   };
 
   const handleAddItem = async () => {
-    if (!newItem.en.trim() || !newItem.hi.trim()) return;
-    await apiPost("/api/rates", {
-      en: newItem.en.trim(),
-      hi: newItem.hi.trim(),
-      rate: Number(newItem.rate || 0),
-    });
-    setNewItem({ en: "", hi: "", rate: "" });
-    await loadBaseData();
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "success",
-      title: "Item added / आइटम जुड़ गया",
-      showConfirmButton: false,
-      timer: 1500,
-      timerProgressBar: true,
-    });
+    if (!newItem.en.trim() || !newItem.hi.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Fields / क्षेत्र अपूर्ण हैं",
+        text: "Please enter both English and Hindi names / कृपया अंग्रेजी और हिंदी दोनों नाम दर्ज करें",
+      });
+      return;
+    }
+    try {
+      await apiPost("/api/rates", {
+        en: newItem.en.trim(),
+        hi: newItem.hi.trim(),
+        rate: Number(newItem.rate || 0),
+      });
+      setNewItem({ en: "", hi: "", rate: "" });
+      await loadBaseData();
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Item added / आइटम जुड़ गया",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Failed to add item / आइटम जोड़ने में विफल",
+        text: err.message || "Could not connect to database / डेटाबेस से कनेक्ट नहीं हो सका",
+      });
+    }
   };
 
   const handleDeleteItem = async (id) => {
