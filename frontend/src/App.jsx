@@ -1151,6 +1151,21 @@ export default function App() {
               placeholder="e.g. Jeans"
               value={newItem.en}
               onChange={(e) => setNewItem({ ...newItem, en: e.target.value })}
+              onBlur={async (e) => {
+                const val = e.target.value.trim();
+                if (val && !newItem.hi.trim()) {
+                  try {
+                    const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(val)}`);
+                    if (res.ok) {
+                      const data = await res.json();
+                      const translated = data[0][0][0] || "";
+                      setNewItem(prev => ({ ...prev, hi: translated }));
+                    }
+                  } catch (err) {
+                    console.error("Auto translation error", err);
+                  }
+                }
+              }}
             />
             
             <label className="label">Hindi Name</label>
