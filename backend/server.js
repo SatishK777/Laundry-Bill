@@ -207,6 +207,16 @@ app.get("/api/bill", async (req, res) => {
   });
 });
 
+const path = require("path");
+
+// Serve static assets from the React production build
+app.use(express.static(path.join(__dirname, "../frontend/dist")));
+
+// Catch-all route to serve the React SPA index.html for non-API routes
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
+});
+
 const PORT = process.env.PORT || 3000;
 const MONGODB_URI = process.env.MONGODB_URI;
 

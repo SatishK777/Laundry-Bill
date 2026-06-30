@@ -1,0 +1,11 @@
+{
+  "name": "laundry-billing-system",
+  "version": "1.0.0",
+  "description": "Fullstack laundry billing application",
+  "scripts": {
+    "build": "npm run build-frontend && npm run install-backend",
+    "build-frontend": "cd frontend && npm install && npm run build",
+    "install-backend": "cd backend && npm install",
+    "start": "cd backend && node server.js"
+  }
+}
