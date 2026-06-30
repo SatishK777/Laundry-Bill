@@ -59,7 +59,10 @@ function SearchableSelect({ items, selectedId, onChange, placeholder }) {
             onChange("");
           }
         }}
-        onFocus={() => setIsOpen(true)}
+        onFocus={() => {
+          setIsOpen(true);
+          setSearch("");
+        }}
       />
       <div className="search-select-arrow">
         <svg
