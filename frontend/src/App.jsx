@@ -1038,6 +1038,7 @@ export default function App() {
             placeholder="Type item name / नाम लिखें..."
             value={specialSearch}
             onChange={(e) => setSpecialSearch(e.target.value)}
+            onFocus={() => setSpecialSearch("")}
           />
 
           <div className="items-list">
