@@ -983,16 +983,26 @@ input:focus, select:focus {
   font-weight: bold;
 }
 
+.ledger-print-only {
+  display: none;
+}
+
 /* Ledger print media styling */
 @media print {
+  .ledger-table-wrapper {
+    display: none !important;
+  }
+  .ledger-print-only {
+    display: block !important;
+  }
   .ledger-table {
-    font-size: 8px !important;
+    font-size: 8.5px !important;
     width: 100% !important;
     border-collapse: collapse !important;
   }
   .ledger-table th,
   .ledger-table td {
-    padding: 3px 4px !important;
+    padding: 4px 6px !important;
     border: 1px solid #000 !important;
     min-width: unset !important;
     white-space: nowrap !important;
@@ -1008,8 +1018,5 @@ input:focus, select:focus {
   .ledger-row-common,
   .ledger-row-total {
     background: transparent !important;
-  }
-  .print-ledger-header {
-    display: block !important;
   }
 }

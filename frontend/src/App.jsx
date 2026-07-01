@@ -1145,9 +1145,94 @@ export default function App() {
             </table>
           </div>
 
-          <div className="print-area print-ledger-header">
-            <h2 style={{ textAlign: 'center', margin: '0 0 10px 0' }}>Om Ganesh Laundry Billing - Monthly Ledger Sheet</h2>
-            <div style={{ textAlign: 'center', marginBottom: 15, fontWeight: 'bold' }}>Month: {ledgerMonth}</div>
+          {/* Print-only split tables to avoid cutting off columns */}
+          <div className="print-area ledger-print-only">
+            {(() => {
+              const chunks = [];
+              const chunkSize = 9;
+              for (let i = 0; i < customers.length; i += chunkSize) {
+                chunks.push(customers.slice(i, i + chunkSize));
+              }
+              return chunks.map((customerChunk, chunkIdx) => (
+                <div 
+                  className="ledger-print-page" 
+                  key={`print-chunk-${chunkIdx}`} 
+                  style={{ 
+                    pageBreakAfter: chunkIdx < chunks.length - 1 ? 'always' : 'avoid',
+                    breakAfter: chunkIdx < chunks.length - 1 ? 'page' : 'avoid',
+                    marginTop: chunkIdx > 0 ? '20px' : '0px'
+                  }}
+                >
+                  <div style={{ textAlign: 'center', marginBottom: 10 }}>
+                    <h2 style={{ margin: '0 0 4px 0', fontSize: '14px', fontWeight: 'bold' }}>OM GANESHAY NAMAH</h2>
+                    <h3 style={{ margin: 0, fontSize: '11px', fontWeight: 'bold' }}>
+                      Monthly Ledger Sheet - Month: {ledgerMonth} (Part {chunkIdx + 1} of {chunks.length})
+                    </h3>
+                  </div>
+                  
+                  <table className="ledger-table print-table" style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid black' }}>
+                    <thead>
+                      <tr style={{ background: '#f1f5f9', borderBottom: '2px solid black' }}>
+                        <th style={{ textAlign: 'left', padding: '6px', fontSize: '9px', borderRight: '1px solid black', width: '120px' }}>Item Name / आइटम</th>
+                        {customerChunk.map((c) => (
+                          <th key={`print-head-${c._id}`} style={{ padding: '6px', fontSize: '9px', borderRight: '1px solid black', textAlign: 'center' }}>
+                            {c.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {/* Common Cloth */}
+                      <tr style={{ borderBottom: '1px solid black' }}>
+                        <td style={{ padding: '6px', fontSize: '8px', fontWeight: 'bold', borderRight: '1px solid black' }}>Common Cloth / सामान्य</td>
+                        {customerChunk.map((customer) => {
+                          const custEntries = ledgerEntries.filter(e => e.laundryId === customer._id);
+                          const totalCommon = custEntries.reduce((sum, e) => sum + Number(e.commonQty || 0), 0);
+                          return (
+                            <td key={`print-common-${customer._id}`} style={{ padding: '6px', fontSize: '8px', borderRight: '1px solid black', textAlign: 'center' }}>
+                              {totalCommon > 0 ? totalCommon : "-"}
+                            </td>
+                          );
+                        })}
+                      </tr>
+
+                      {/* Special Items */}
+                      {rates.map((item) => (
+                        <tr key={`print-item-row-${item._id}`} style={{ borderBottom: '1px solid black' }}>
+                          <td style={{ padding: '6px', fontSize: '8px', borderRight: '1px solid black' }}>{item.en} ({item.hi})</td>
+                          {customerChunk.map((customer) => {
+                            const custEntries = ledgerEntries.filter(e => e.laundryId === customer._id);
+                            const totalItem = custEntries.reduce((sum, e) => {
+                              const qty = e.items ? e.items[item._id] || 0 : 0;
+                              return sum + Number(qty || 0);
+                            }, 0);
+                            return (
+                              <td key={`print-item-val-${item._id}-${customer._id}`} style={{ padding: '6px', fontSize: '8px', borderRight: '1px solid black', textAlign: 'center' }}>
+                                {totalItem > 0 ? totalItem : "-"}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+
+                      {/* Total Rupees */}
+                      <tr style={{ background: '#e2e8f0', borderTop: '2px solid black', fontWeight: 'bold' }}>
+                        <td style={{ padding: '8px 6px', fontSize: '9px', borderRight: '1px solid black' }}>Total Rupees / कुल रुपये</td>
+                        {customerChunk.map((customer) => {
+                          const custEntries = ledgerEntries.filter(e => e.laundryId === customer._id);
+                          const totalAmt = custEntries.reduce((sum, e) => sum + calcAmount(e, rates, common?.rate), 0);
+                          return (
+                            <td key={`print-total-val-${customer._id}`} style={{ padding: '8px 6px', fontSize: '9px', borderRight: '1px solid black', textAlign: 'center', color: '#000' }}>
+                              {totalAmt > 0 ? totalAmt.toFixed(0) : "-"}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              ));
+            })()}
           </div>
         </section>
       )}
