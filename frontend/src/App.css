@@ -1021,20 +1021,22 @@ input:focus, select:focus {
   }
 }
 
-.print-cut-line {
+.print-vertical-cut-line {
   display: none;
 }
 
 @media print {
-  .print-cut-line {
+  .print-vertical-cut-line {
     display: block !important;
   }
   
   .bill-print-page {
-    height: 94vh !important;
+    width: 100% !important;
+    height: 90vh !important;
     display: flex !important;
-    flex-direction: column !important;
+    flex-direction: row !important;
     justify-content: space-between !important;
+    align-items: stretch !important;
     page-break-after: always !important;
     break-after: page !important;
     margin-bottom: 0 !important;
@@ -1042,7 +1044,8 @@ input:focus, select:focus {
   }
   
   .bill-print-page .receipt-card {
-    height: 46% !important;
+    width: 48% !important;
+    height: 100% !important;
     margin: 0 !important;
     border: 1px dashed black !important;
     box-shadow: none !important;
