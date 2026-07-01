@@ -211,8 +211,8 @@ export default function App() {
     if (entry.laundryId && customers) {
       const customer = customers.find(c => c._id === entry.laundryId);
       if (customer) {
-        const name = customer.name.trim().toLowerCase();
-        if (name === "shri ram" || name === "sachin") {
+        const name = customer.name.replace(/\s+/g, "").toLowerCase();
+        if (name === "shriram" || (name.includes("shri") && name.includes("ram")) || name === "sachin") {
           activeCommonRate = 3;
         } else if (name === "umesh") {
           activeCommonRate = 3.5;
@@ -363,8 +363,8 @@ export default function App() {
         let totalAmount = 0;
 
         let activeCommonRate = Number(common?.rate || 0);
-        const nameLower = customer.name.trim().toLowerCase();
-        if (nameLower === "shri ram" || nameLower === "sachin") {
+        const nameLower = customer.name.replace(/\s+/g, "").toLowerCase();
+        if (nameLower === "shriram" || (nameLower.includes("shri") && nameLower.includes("ram")) || nameLower === "sachin") {
           activeCommonRate = 3;
         } else if (nameLower === "umesh") {
           activeCommonRate = 3.5;

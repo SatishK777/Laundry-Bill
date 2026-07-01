@@ -186,8 +186,8 @@ app.get("/api/bill", async (req, res) => {
 
   let activeCommonRate = Number(common?.rate || 0);
   if (customer) {
-    const name = customer.name.trim().toLowerCase();
-    if (name === "shri ram" || name === "sachin") {
+    const name = customer.name.replace(/\s+/g, "").toLowerCase();
+    if (name === "shriram" || (name.includes("shri") && name.includes("ram")) || name === "sachin") {
       activeCommonRate = 3;
     } else if (name === "umesh") {
       activeCommonRate = 3.5;
