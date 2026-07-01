@@ -142,6 +142,8 @@ export default function App() {
   const [summaryEntries, setSummaryEntries] = useState([]);
   const [billsList, setBillsList] = useState([]);
   const [billMode, setBillMode] = useState("single");
+  const [ledgerMonth, setLedgerMonth] = useState("");
+  const [ledgerEntries, setLedgerEntries] = useState([]);
 
   const apiGet = async (path) => {
     const res = await fetch(path);
@@ -201,6 +203,7 @@ export default function App() {
     if (!billMonth) setBillMonth(month);
     if (!entriesMonth) setEntriesMonth(month);
     if (!summaryMonth) setSummaryMonth(month);
+    if (!ledgerMonth) setLedgerMonth(month);
   };
 
   const calcAmount = (entry, ratesList, commonRate) => {
@@ -587,6 +590,30 @@ export default function App() {
     }
   }, [view, summaryMonth]);
 
+  const loadLedgerData = async () => {
+    if (!ledgerMonth) return;
+    const data = await fetchEntries({ month: ledgerMonth });
+    setLedgerEntries(data);
+  };
+
+  useEffect(() => {
+    if (view === "ledger" && ledgerMonth) {
+      loadLedgerData();
+    }
+  }, [view, ledgerMonth]);
+
+  const handlePrintLedger = () => {
+    const style = document.createElement("style");
+    style.id = "ledger-print-style";
+    style.innerHTML = "@page { size: landscape; margin: 0.5cm; }";
+    document.head.appendChild(style);
+    window.print();
+    setTimeout(() => {
+      const el = document.getElementById("ledger-print-style");
+      if (el) el.remove();
+    }, 1000);
+  };
+
   const formatEntryItems = (entry) => {
     const items = [];
     if (Number(entry.commonQty || 0) > 0) {
@@ -643,6 +670,7 @@ export default function App() {
           { key: "entry", label: "New Entry / एंट्री", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg> },
           { key: "bill", label: "Bill / बिल", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> },
           { key: "summary", label: "Summary / सारांश", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> },
+          { key: "ledger", label: "Ledger / बहीखाता", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/><line x1="15" y1="3" x2="15" y2="21"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/></svg> },
           { key: "customers", label: "Customers / ग्राहक", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> },
           { key: "rates", label: "Rates / रेट", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> },
           { key: "entries", label: "Entries / सभी एंट्री", icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> }
@@ -1034,6 +1062,92 @@ export default function App() {
                 </tr>
               </tbody>
             </table>
+          </div>
+        </section>
+      )}
+
+      {view === "ledger" && (
+        <section className="card" style={{ maxWidth: '100%', overflow: 'hidden' }}>
+          <div className="card-title">Monthly Ledger Sheet / मासिक बहीखाता ग्रिड</div>
+          <label className="label">Month / महीना</label>
+          <input
+            type="month"
+            value={ledgerMonth}
+            onChange={(e) => setLedgerMonth(e.target.value)}
+          />
+          
+          <div className="button-grid" style={{ marginBottom: 16 }}>
+            <button className="primary" onClick={loadLedgerData}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              Load / देखें
+            </button>
+            <button className="secondary" onClick={handlePrintLedger}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              Print / प्रिंट (Landscape)
+            </button>
+          </div>
+
+          <div className="ledger-table-wrapper">
+            <table className="ledger-table">
+              <thead>
+                <tr>
+                  <th>Item Name / आइटम</th>
+                  {customers.map((c) => (
+                    <th key={`head-${c._id}`}>{c.name}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="ledger-row-common">
+                  <td>Common Cloth / सामान्य</td>
+                  {customers.map((customer) => {
+                    const custEntries = ledgerEntries.filter(e => e.laundryId === customer._id);
+                    const totalCommon = custEntries.reduce((sum, e) => sum + Number(e.commonQty || 0), 0);
+                    return (
+                      <td key={`common-val-${customer._id}`}>
+                        {totalCommon > 0 ? totalCommon : "-"}
+                      </td>
+                    );
+                  })}
+                </tr>
+
+                {rates.map((item) => (
+                  <tr key={`ledger-row-item-${item._id}`}>
+                    <td>{item.en} ({item.hi})</td>
+                    {customers.map((customer) => {
+                      const custEntries = ledgerEntries.filter(e => e.laundryId === customer._id);
+                      const totalItem = custEntries.reduce((sum, e) => {
+                        const qty = e.items ? e.items[item._id] || 0 : 0;
+                        return sum + Number(qty || 0);
+                      }, 0);
+                      return (
+                        <td key={`item-val-${item._id}-${customer._id}`}>
+                          {totalItem > 0 ? totalItem : "-"}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+
+                <tr className="ledger-row-total" style={{ borderTop: '2px solid var(--ink)', background: 'var(--bg)' }}>
+                  <td style={{ fontWeight: 'bold' }}>Total Rupees / कुल रुपये</td>
+                  {customers.map((customer) => {
+                    const custEntries = ledgerEntries.filter(e => e.laundryId === customer._id);
+                    const totalAmt = custEntries.reduce((sum, e) => sum + calcAmount(e, rates, common?.rate), 0);
+                    return (
+                      <td key={`total-val-${customer._id}`} style={{ fontWeight: 800, color: 'var(--primary)' }}>
+                        {totalAmt > 0 ? money(totalAmt) : "-"}
+                      </td>
+                    );
+                  })}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="print-area print-ledger-header">
+            <h2 style={{ textAlign: 'center', margin: '0 0 10px 0' }}>Om Ganesh Laundry Billing - Monthly Ledger Sheet</h2>
+            <div style={{ textAlign: 'center', marginBottom: 15, fontWeight: 'bold' }}>Month: {ledgerMonth}</div>
           </div>
         </section>
       )}
