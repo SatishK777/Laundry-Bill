@@ -614,6 +614,18 @@ export default function App() {
     }, 1000);
   };
 
+  const handlePrintPortrait = () => {
+    const style = document.createElement("style");
+    style.id = "portrait-print-style";
+    style.innerHTML = "@page { size: portrait; margin: 0.4in; }";
+    document.head.appendChild(style);
+    window.print();
+    setTimeout(() => {
+      const el = document.getElementById("portrait-print-style");
+      if (el) el.remove();
+    }, 1000);
+  };
+
   const formatEntryItems = (entry) => {
     const items = [];
     if (Number(entry.commonQty || 0) > 0) {
@@ -917,7 +929,7 @@ export default function App() {
               <div className="bill-total">
                 Total / कुल: {money(bill.totalAmount)}
               </div>
-              <button className="secondary full" onClick={() => window.print()}>
+              <button className="secondary full" onClick={handlePrintPortrait}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Print Receipt / प्रिंट करें
               </button>
@@ -927,43 +939,74 @@ export default function App() {
           {billMode === "all" && billsList.length > 0 && (
             <div style={{ marginTop: 20 }}>
               <div className="no-print" style={{ marginBottom: 12 }}>
-                <button className="primary full" onClick={() => window.print()}>
+                <button className="primary full" onClick={handlePrintPortrait}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   Print All Bills ({billsList.length}) / सभी प्रिंट करें
                 </button>
               </div>
               
               <div className="all-bills-print-container">
-                {billsList.map((singleBill, idx) => (
-                  <div className="receipt-card" key={`all-bills-${idx}`} style={{ marginBottom: 20 }}>
-                    <div className="bill-header">
-                      <div className="bill-title">OM GANESHAY NAMAH</div>
-                      <div className="bill-sub">Laundry Bill / लॉन्ड्री बिल</div>
-                    </div>
-                    <div className="bill-meta">
-                      <div>
-                        <span><strong>Customer:</strong> {singleBill.customer}</span>
-                        <span><strong>Month:</strong> {singleBill.month}</span>
-                      </div>
-                      <div className="bill-meta-right">
-                        <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>
-                        <span><strong>Bill ID:</strong> L-{singleBill.customer.slice(0, 3).toUpperCase()}-{singleBill.month.replace("-", "")}</span>
-                      </div>
-                    </div>
-                    <div className="bill-table">
-                      {singleBill.rows.map((r, i) => (
-                        <div className="bill-row" key={`${r.name}-${i}`}>
-                          <div>{r.name}</div>
-                          <div>Qty: {r.qty}</div>
-                          <div>{money(r.amount)}</div>
+                {(() => {
+                  const pairs = [];
+                  for (let i = 0; i < billsList.length; i += 2) {
+                    pairs.push(billsList.slice(i, i + 2));
+                  }
+                  return pairs.map((pair, pageIdx) => (
+                    <div 
+                      className="bill-print-page" 
+                      key={`bill-page-${pageIdx}`}
+                      style={{
+                        pageBreakAfter: pageIdx < pairs.length - 1 ? 'always' : 'avoid',
+                        breakAfter: pageIdx < pairs.length - 1 ? 'page' : 'avoid',
+                      }}
+                    >
+                      {pair.map((singleBill, idx) => (
+                        <div className="receipt-card" key={`bill-receipt-${idx}`} style={{ marginBottom: 20 }}>
+                          <div className="bill-header">
+                            <div className="bill-title">OM GANESHAY NAMAH</div>
+                            <div className="bill-sub">Laundry Bill / लॉन्ड्री बिल</div>
+                          </div>
+                          <div className="bill-meta">
+                            <div>
+                              <span><strong>Customer:</strong> {singleBill.customer}</span>
+                              <span><strong>Month:</strong> {singleBill.month}</span>
+                            </div>
+                            <div className="bill-meta-right">
+                              <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>
+                              <span><strong>Bill ID:</strong> L-{singleBill.customer.slice(0, 3).toUpperCase()}-{singleBill.month.replace("-", "")}</span>
+                            </div>
+                          </div>
+                          <div className="bill-table">
+                            {singleBill.rows.map((r, i) => (
+                              <div className="bill-row" key={`${r.name}-${i}`}>
+                                <div>{r.name}</div>
+                                <div>Qty: {r.qty}</div>
+                                <div>{money(r.amount)}</div>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="bill-total">
+                            Total / कुल: {money(singleBill.totalAmount)}
+                          </div>
                         </div>
                       ))}
+                      
+                      {pair.length === 2 && (
+                        <div className="print-cut-line" style={{
+                          borderTop: '1.5px dashed var(--ink)',
+                          width: '100%',
+                          textAlign: 'center',
+                          fontSize: '10px',
+                          color: 'var(--ink)',
+                          margin: '15px 0',
+                          fontWeight: 'bold'
+                        }}>
+                          ✂️ Scissors Cut Here / यहाँ से काटें ✂️
+                        </div>
+                      )}
                     </div>
-                    <div className="bill-total">
-                      Total / कुल: {money(singleBill.totalAmount)}
-                    </div>
-                  </div>
-                ))}
+                  ));
+                })()}
               </div>
             </div>
           )}
