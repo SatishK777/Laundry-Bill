@@ -32,41 +32,6 @@ const Common = mongoose.model("Common", CommonSchema);
 const Rate = mongoose.model("Rate", RateSchema);
 const Entry = mongoose.model("Entry", EntrySchema);
 
-const demoNames = [
-  "Asha Laundry",
-  "Bright Wash",
-  "City Cleaners",
-  "Dhobi Express",
-  "Easy Iron",
-  "Fresh Fold",
-  "Ganga Laundry",
-  "Happy Wash",
-  "Ideal Press",
-  "Jai Clean",
-  "Krishna Laundry",
-  "Lucky Press",
-  "Modern Wash",
-  "Narmada Clean",
-  "Om Sai Laundry",
-  "Prabhat Press",
-  "Quick Wash",
-  "Riya Laundry",
-  "Sunrise Clean",
-  "Tiranga Wash",
-  "Balaji Laundry",
-  "Champaran Cleaners",
-  "Deepak Press",
-  "Express Dry Cleaners",
-  "Golden Wash",
-  "Hari Om Dhobi",
-  "Laxmi Laundry",
-  "Royal Press",
-  "Star Wash",
-  "White Shine"
-];
-
-const isoDate = (d) => d.toISOString().slice(0, 10);
-
 const randomInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 async function run() {
@@ -79,43 +44,26 @@ async function run() {
   await mongoose.connect(uri);
   console.log("Connected to MongoDB for seeding demo data...");
 
-  // 1. Ensure all 30 customers exist
-  const customers = [];
-  for (const name of demoNames) {
-    let customer = await Customer.findOne({ name });
-    if (!customer) {
-      customer = await Customer.create({ name });
-    }
-    customers.push(customer);
-  }
-  console.log(`Ensured ${customers.length} shop customers exist.`);
+  // 1. Fetch existing customers from the database (retaining your real customers)
+  const customers = await Customer.find();
+  console.log(`Found ${customers.length} existing customers in database.`);
 
-  const common = await Common.findOne();
-  if (!common) {
-    console.log("No common rate found. Creating default...");
-    await Common.create({ label: "Common", rate: 5 });
+  if (customers.length === 0) {
+    console.error("No customers found in database! Please add some customers first.");
+    await mongoose.disconnect();
+    process.exit(1);
   }
+
+  // 2. Fetch rates
   const rates = await Rate.find();
-  if (rates.length === 0) {
-    console.log("No special rates found. Creating defaults...");
-    await Rate.insertMany([
-      { en: "Saree", hi: "साड़ी", rate: 15 },
-      { en: "Dhoti", hi: "धोती", rate: 12 },
-      { en: "Blanket", hi: "कंबल", rate: 25 },
-      { en: "Chadar", hi: "चादर", rate: 10 },
-      { en: "Gown", hi: "गाउन", rate: 18 },
-      { en: "Chaniya", hi: "चनिया", rate: 16 },
-      { en: "Curtains", hi: "परदे", rate: 20 },
-    ]);
-  }
-  const updatedRates = await Rate.find();
-  const updatedCommon = await Common.findOne();
+  console.log(`Found ${rates.length} special items in database.`);
 
-  // 2. Clear existing entries for June 2026 to ensure clean seeding
+  // 3. Clear existing entries for June 2026 to ensure clean seeding
   console.log("Clearing existing entries for June 2026...");
-  await Entry.deleteMany({ date: /^2026-06/ });
+  const deleteResult = await Entry.deleteMany({ date: /^2026-06/ });
+  console.log(`Cleared ${deleteResult.deletedCount} existing entries.`);
 
-  // 3. Generate dates for June 1 to June 30, 2026
+  // 4. Generate dates for June 1 to June 30, 2026
   const dates = [];
   for (let day = 1; day <= 30; day += 1) {
     const dayStr = String(day).padStart(2, "0");
@@ -123,10 +71,13 @@ async function run() {
   }
 
   let createdCount = 0;
-  
-  // 4. For each date, generate entries for 25-28 random shops
+
+  // 5. For each date, generate entries for a subset of the real customers
   for (const date of dates) {
-    const targetCount = randomInt(25, 28);
+    // 80% to 95% of your real customers will have entries on any given day
+    const activityPercentage = randomInt(80, 95);
+    const targetCount = Math.max(1, Math.floor((customers.length * activityPercentage) / 100));
+    
     // Shuffle customers
     const shuffledShops = [...customers].sort(() => Math.random() - 0.5);
     const activeShops = shuffledShops.slice(0, targetCount);
@@ -138,10 +89,10 @@ async function run() {
       if (exists) continue;
 
       const items = {};
-      if (updatedRates.length > 0) {
+      if (rates.length > 0) {
         // Randomly select 1 to 3 special items
-        const sampleCount = randomInt(1, 3);
-        const shuffledRates = [...updatedRates].sort(() => Math.random() - 0.5);
+        const sampleCount = randomInt(1, Math.min(3, rates.length));
+        const shuffledRates = [...rates].sort(() => Math.random() - 0.5);
         for (let i = 0; i < sampleCount; i += 1) {
           items[shuffledRates[i]._id.toString()] = randomInt(1, 5);
         }
@@ -157,7 +108,7 @@ async function run() {
     }
   }
 
-  console.log(`Demo seed done. New entries created: ${createdCount}`);
+  console.log(`Demo seed done. New entries created for real customers: ${createdCount}`);
   await mongoose.disconnect();
 }
 
