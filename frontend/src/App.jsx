@@ -676,6 +676,15 @@ export default function App() {
     return `${monthsEn[idx]} ${year} / ${monthsHi[idx]} ${year}`;
   };
 
+  const formatMonthOnly = (monthStr) => {
+    if (!monthStr) return "";
+    const [year, month] = monthStr.split("-");
+    const monthsEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthsHi = ["जनवरी", "फरवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
+    const idx = parseInt(month, 10) - 1;
+    return `${monthsEn[idx].toUpperCase()} ( ${monthsHi[idx]} ${year} )`;
+  };
+
   const formatEntryItems = (entry) => {
     const items = [];
     if (Number(entry.commonQty || 0) > 0) {
@@ -953,20 +962,19 @@ export default function App() {
 
           {billMode === "single" && bill && (
             <div className="receipt-card">
-              <div className="bill-header">
-                <div className="bill-title">OM GANESHAY NAMAH</div>
-                <div className="bill-sub">Laundry Bill / लॉन्ड्री बिल</div>
+              <div className="bill-header" style={{ borderBottom: 'none', marginBottom: '5px', paddingBottom: '0' }}>
+                <div className="bill-title" style={{ fontSize: '13px', letterSpacing: '1px', fontWeight: 'bold' }}>OM GANESHAY NAMAH</div>
               </div>
-              <div className="bill-meta">
-                <div>
-                  <span><strong>Customer / ग्राहक:</strong> <span className="bill-meta-title">{bill.customer} {bill.customerHi && `/ ${bill.customerHi}`}</span></span>
-                  <span><strong>Month / महीना:</strong> <span className="bill-meta-title">{formatMonthBill(bill.month)}</span></span>
+              
+              <div className="bill-meta-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '8px' }}>
+                <div className="bill-meta-title" style={{ fontSize: '13px', fontWeight: '800', color: '#000' }}>
+                  {bill.customer} {bill.customerHi && `(${bill.customerHi})`}
                 </div>
-                <div className="bill-meta-right">
-                  <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>
-                  <span><strong>Bill ID:</strong> L-{bill.customer.slice(0, 3).toUpperCase()}-{bill.month.replace("-", "")}</span>
+                <div className="bill-meta-title" style={{ fontSize: '12px', fontWeight: '800', color: '#000' }}>
+                  {formatMonthOnly(bill.month)}
                 </div>
               </div>
+
               <div className="bill-table">
                 {bill.rows.map((r, i) => (
                   <div className="bill-row" key={`${r.name}-${i}`}>
@@ -976,7 +984,7 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <div className="bill-total">
+              <div className="bill-total" style={{ borderTop: '2px solid black', marginTop: '10px', paddingTop: '6px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold' }}>
                 Total / कुल: {money(bill.totalAmount)}
               </div>
               <button className="secondary full" onClick={handlePrintSingleBill}>
@@ -1012,20 +1020,19 @@ export default function App() {
                     >
                       {pair[0] && (
                         <div className="receipt-card">
-                          <div className="bill-header">
-                            <div className="bill-title">OM GANESHAY NAMAH</div>
-                            <div className="bill-sub">Laundry Bill / लॉन्ड्री बिल</div>
+                          <div className="bill-header" style={{ borderBottom: 'none', marginBottom: '5px', paddingBottom: '0' }}>
+                            <div className="bill-title" style={{ fontSize: '13px', letterSpacing: '1px', fontWeight: 'bold' }}>OM GANESHAY NAMAH</div>
                           </div>
-                          <div className="bill-meta">
-                            <div>
-                              <span><strong>Customer / ग्राहक:</strong> <span className="bill-meta-title">{pair[0].customer} {pair[0].customerHi && `/ ${pair[0].customerHi}`}</span></span>
-                              <span><strong>Month / महीना:</strong> <span className="bill-meta-title">{formatMonthBill(pair[0].month)}</span></span>
+                          
+                          <div className="bill-meta-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '8px' }}>
+                            <div className="bill-meta-title" style={{ fontSize: '13px', fontWeight: '800', color: '#000' }}>
+                              {pair[0].customer} {pair[0].customerHi && `(${pair[0].customerHi})`}
                             </div>
-                            <div className="bill-meta-right">
-                              <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>
-                              <span><strong>Bill ID:</strong> L-{pair[0].customer.slice(0, 3).toUpperCase()}-{pair[0].month.replace("-", "")}</span>
+                            <div className="bill-meta-title" style={{ fontSize: '12px', fontWeight: '800', color: '#000' }}>
+                              {formatMonthOnly(pair[0].month)}
                             </div>
                           </div>
+
                           <div className="bill-table">
                             {pair[0].rows.map((r, i) => (
                               <div className="bill-row" key={`${r.name}-${i}`}>
@@ -1035,7 +1042,7 @@ export default function App() {
                               </div>
                             ))}
                           </div>
-                          <div className="bill-total">
+                          <div className="bill-total" style={{ borderTop: '2px solid black', marginTop: '10px', paddingTop: '6px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold' }}>
                             Total / कुल: {money(pair[0].totalAmount)}
                           </div>
                         </div>
@@ -1055,20 +1062,19 @@ export default function App() {
 
                       {pair[1] && (
                         <div className="receipt-card">
-                          <div className="bill-header">
-                            <div className="bill-title">OM GANESHAY NAMAH</div>
-                            <div className="bill-sub">Laundry Bill / लॉन्ड्री बिल</div>
+                          <div className="bill-header" style={{ borderBottom: 'none', marginBottom: '5px', paddingBottom: '0' }}>
+                            <div className="bill-title" style={{ fontSize: '13px', letterSpacing: '1px', fontWeight: 'bold' }}>OM GANESHAY NAMAH</div>
                           </div>
-                          <div className="bill-meta">
-                            <div>
-                              <span><strong>Customer / ग्राहक:</strong> <span className="bill-meta-title">{pair[1].customer} {pair[1].customerHi && `/ ${pair[1].customerHi}`}</span></span>
-                              <span><strong>Month / महीना:</strong> <span className="bill-meta-title">{formatMonthBill(pair[1].month)}</span></span>
+                          
+                          <div className="bill-meta-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', borderBottom: '2px solid black', paddingBottom: '5px', marginBottom: '8px' }}>
+                            <div className="bill-meta-title" style={{ fontSize: '13px', fontWeight: '800', color: '#000' }}>
+                              {pair[1].customer} {pair[1].customerHi && `(${pair[1].customerHi})`}
                             </div>
-                            <div className="bill-meta-right">
-                              <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>
-                              <span><strong>Bill ID:</strong> L-{pair[1].customer.slice(0, 3).toUpperCase()}-{pair[1].month.replace("-", "")}</span>
+                            <div className="bill-meta-title" style={{ fontSize: '12px', fontWeight: '800', color: '#000' }}>
+                              {formatMonthOnly(pair[1].month)}
                             </div>
                           </div>
+
                           <div className="bill-table">
                             {pair[1].rows.map((r, i) => (
                               <div className="bill-row" key={`${r.name}-${i}`}>
@@ -1078,7 +1084,7 @@ export default function App() {
                               </div>
                             ))}
                           </div>
-                          <div className="bill-total">
+                          <div className="bill-total" style={{ borderTop: '2px solid black', marginTop: '10px', paddingTop: '6px', textAlign: 'right', fontSize: '13px', fontWeight: 'bold' }}>
                             Total / कुल: {money(pair[1].totalAmount)}
                           </div>
                         </div>

@@ -1038,7 +1038,7 @@ input:focus, select:focus {
   
   .bill-print-page {
     width: 100% !important;
-    height: 94vh !important; /* Stretch container to full print page height */
+    height: 86vh !important; /* Slightly shorter to prevent spilling bottom borders onto next page */
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-between !important;
