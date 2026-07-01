@@ -298,7 +298,22 @@ export default function App() {
     if (!billLaundry || !billMonth) return;
     try {
       const data = await apiGet(`/api/bill?laundryId=${billLaundry}&month=${billMonth}`);
-      setBill(data);
+      
+      let hiName = "";
+      try {
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(data.customer)}`);
+        if (res.ok) {
+          const transData = await res.json();
+          hiName = transData[0][0][0] || "";
+        }
+      } catch (e) {
+        console.error("Failed to translate customer name", e);
+      }
+
+      setBill({
+        ...data,
+        customerHi: hiName
+      });
       setBillMode("single");
       setBillsList([]);
     } catch (err) {
@@ -314,11 +329,10 @@ export default function App() {
     if (!billMonth) return;
     try {
       const entries = await apiGet(`/api/entries?month=${billMonth}`);
-      const list = [];
-
-      for (const customer of customers) {
+      
+      const billPromises = customers.map(async (customer) => {
         const custEntries = entries.filter((e) => e.laundryId === customer._id);
-        if (custEntries.length === 0) continue;
+        if (custEntries.length === 0) return null;
 
         let commonQty = 0;
         const itemTotals = {};
@@ -350,13 +364,28 @@ export default function App() {
           }
         });
 
-        list.push({
+        // Translate customer name
+        let hiName = "";
+        try {
+          const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(customer.name)}`);
+          if (res.ok) {
+            const transData = await res.json();
+            hiName = transData[0][0][0] || "";
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
+        return {
           customer: customer.name,
+          customerHi: hiName,
           month: billMonth,
           rows,
           totalAmount,
-        });
-      }
+        };
+      });
+
+      const list = (await Promise.all(billPromises)).filter(b => b !== null);
 
       if (list.length === 0) {
         Swal.fire({
@@ -605,7 +634,7 @@ export default function App() {
   const handlePrintLedger = () => {
     const style = document.createElement("style");
     style.id = "ledger-print-style";
-    style.innerHTML = "@page { size: landscape; margin: 0.5cm; }";
+    style.innerHTML = "@page { size: landscape; margin: 0 !important; } body { margin: 0.5cm !important; }";
     document.head.appendChild(style);
     window.print();
     setTimeout(() => {
@@ -617,7 +646,7 @@ export default function App() {
   const handlePrintSingleBill = () => {
     const style = document.createElement("style");
     style.id = "portrait-print-style";
-    style.innerHTML = "@page { size: portrait; margin: 0.4in; }";
+    style.innerHTML = "@page { size: portrait; margin: 0 !important; } body { margin: 0.4in !important; }";
     document.head.appendChild(style);
     window.print();
     setTimeout(() => {
@@ -629,13 +658,22 @@ export default function App() {
   const handlePrintAllBills = () => {
     const style = document.createElement("style");
     style.id = "landscape-print-style";
-    style.innerHTML = "@page { size: landscape; margin: 0.4in; }";
+    style.innerHTML = "@page { size: landscape; margin: 0 !important; } body { margin: 0.4in !important; }";
     document.head.appendChild(style);
     window.print();
     setTimeout(() => {
       const el = document.getElementById("landscape-print-style");
       if (el) el.remove();
     }, 1000);
+  };
+
+  const formatMonthBill = (monthStr) => {
+    if (!monthStr) return "";
+    const [year, month] = monthStr.split("-");
+    const monthsEn = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthsHi = ["जनवरी", "फरवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"];
+    const idx = parseInt(month, 10) - 1;
+    return `${monthsEn[idx]} ${year} / ${monthsHi[idx]} ${year}`;
   };
 
   const formatEntryItems = (entry) => {
@@ -921,8 +959,8 @@ export default function App() {
               </div>
               <div className="bill-meta">
                 <div>
-                  <span><strong>Customer:</strong> {bill.customer}</span>
-                  <span><strong>Month:</strong> {bill.month}</span>
+                  <span><strong>Customer / ग्राहक:</strong> <span className="bill-meta-title">{bill.customer} {bill.customerHi && `/ ${bill.customerHi}`}</span></span>
+                  <span><strong>Month / महीना:</strong> <span className="bill-meta-title">{formatMonthBill(bill.month)}</span></span>
                 </div>
                 <div className="bill-meta-right">
                   <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>
@@ -980,8 +1018,8 @@ export default function App() {
                           </div>
                           <div className="bill-meta">
                             <div>
-                              <span><strong>Customer:</strong> {pair[0].customer}</span>
-                              <span><strong>Month:</strong> {pair[0].month}</span>
+                              <span><strong>Customer / ग्राहक:</strong> <span className="bill-meta-title">{pair[0].customer} {pair[0].customerHi && `/ ${pair[0].customerHi}`}</span></span>
+                              <span><strong>Month / महीना:</strong> <span className="bill-meta-title">{formatMonthBill(pair[0].month)}</span></span>
                             </div>
                             <div className="bill-meta-right">
                               <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>
@@ -1023,8 +1061,8 @@ export default function App() {
                           </div>
                           <div className="bill-meta">
                             <div>
-                              <span><strong>Customer:</strong> {pair[1].customer}</span>
-                              <span><strong>Month:</strong> {pair[1].month}</span>
+                              <span><strong>Customer / ग्राहक:</strong> <span className="bill-meta-title">{pair[1].customer} {pair[1].customerHi && `/ ${pair[1].customerHi}`}</span></span>
+                              <span><strong>Month / महीना:</strong> <span className="bill-meta-title">{formatMonthBill(pair[1].month)}</span></span>
                             </div>
                             <div className="bill-meta-right">
                               <span><strong>Date:</strong> {new Date().toLocaleDateString('en-IN')}</span>

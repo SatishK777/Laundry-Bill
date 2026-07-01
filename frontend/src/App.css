@@ -674,6 +674,12 @@ input:focus, select:focus {
   margin-bottom: 16px;
 }
 
+.bill-meta-title {
+  color: #000;
+  font-weight: 800;
+  font-size: 1.05em;
+}
+
 /* Collapsible Days / All Entries page */
 .day-block {
   border: 1px solid var(--line);
@@ -1077,6 +1083,12 @@ input:focus, select:focus {
     margin-bottom: 6px !important;
     display: flex !important;
     justify-content: space-between !important;
+  }
+
+  .bill-print-page .receipt-card .bill-meta .bill-meta-title {
+    font-size: 10.5px !important;
+    font-weight: 800 !important;
+    color: #000 !important;
   }
 
   .bill-print-page .receipt-card .bill-table {
