@@ -1097,7 +1097,7 @@ input:focus, select:focus {
   }
   
   .bill-print-page .receipt-card .bill-total {
-    font-size: 10px !important;
+    font-size: 13px !important; /* Larger text for better readability */
     font-weight: bold !important;
     margin-top: 6px !important;
     padding-top: 4px !important;
