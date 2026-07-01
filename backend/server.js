@@ -184,8 +184,18 @@ app.get("/api/bill", async (req, res) => {
   const rows = [];
   let totalAmount = 0;
 
-  if (commonQty > 0 && common) {
-    const amount = commonQty * Number(common.rate || 0);
+  let activeCommonRate = Number(common?.rate || 0);
+  if (customer) {
+    const name = customer.name.trim().toLowerCase();
+    if (name === "shri ram" || name === "sachin") {
+      activeCommonRate = 3;
+    } else if (name === "umesh") {
+      activeCommonRate = 3.5;
+    }
+  }
+
+  if (commonQty > 0) {
+    const amount = commonQty * activeCommonRate;
     totalAmount += amount;
     rows.push({ name: "Common", qty: commonQty, amount });
   }

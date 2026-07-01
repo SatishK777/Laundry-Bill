@@ -207,7 +207,20 @@ export default function App() {
   };
 
   const calcAmount = (entry, ratesList, commonRate) => {
-    let total = Number(entry.commonQty || 0) * Number(commonRate || 0);
+    let activeCommonRate = Number(commonRate || 0);
+    if (entry.laundryId && customers) {
+      const customer = customers.find(c => c._id === entry.laundryId);
+      if (customer) {
+        const name = customer.name.trim().toLowerCase();
+        if (name === "shri ram" || name === "sachin") {
+          activeCommonRate = 3;
+        } else if (name === "umesh") {
+          activeCommonRate = 3.5;
+        }
+      }
+    }
+
+    let total = Number(entry.commonQty || 0) * activeCommonRate;
     for (const [id, qty] of Object.entries(entry.items || {})) {
       const item = ratesList.find((r) => r._id === id);
       if (item) total += Number(qty) * Number(item.rate || 0);
@@ -349,8 +362,16 @@ export default function App() {
         const rows = [];
         let totalAmount = 0;
 
+        let activeCommonRate = Number(common?.rate || 0);
+        const nameLower = customer.name.trim().toLowerCase();
+        if (nameLower === "shri ram" || nameLower === "sachin") {
+          activeCommonRate = 3;
+        } else if (nameLower === "umesh") {
+          activeCommonRate = 3.5;
+        }
+
         if (commonQty > 0 && common) {
-          const amount = commonQty * Number(common.rate || 0);
+          const amount = commonQty * activeCommonRate;
           totalAmount += amount;
           rows.push({ name: "Common", qty: commonQty, amount });
         }
