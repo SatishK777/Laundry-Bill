@@ -1032,11 +1032,11 @@ input:focus, select:focus {
   
   .bill-print-page {
     width: 100% !important;
-    height: auto !important; /* Dynamic height to fit contents */
+    height: 94vh !important; /* Stretch container to full print page height */
     display: flex !important;
     flex-direction: row !important;
     justify-content: space-between !important;
-    align-items: flex-start !important; /* independent height scaling */
+    align-items: stretch !important; /* Force cards to have identical height */
     page-break-after: always !important;
     break-after: page !important;
     margin-bottom: 0 !important;
@@ -1045,14 +1045,14 @@ input:focus, select:focus {
   
   .bill-print-page .receipt-card {
     width: 48% !important;
-    height: auto !important; /* Dynamic height - will wrap all items and totals */
+    height: 100% !important; /* Card extends to page bottom, creating blank space */
     margin: 0 !important;
-    border: 1px dashed black !important;
+    border: 1.5px dashed black !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
-    padding: 10px 12px !important; /* Compact padding */
+    padding: 12px 14px !important;
   }
 
   .bill-print-page .receipt-card .bill-header {
