@@ -24,12 +24,15 @@ const RateSchema = new Schema({
   rate: { type: Number, required: true, min: 0 },
 });
 
-const EntrySchema = new Schema({
-  laundryId: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
-  date: { type: String, required: true },
-  commonQty: { type: Number, default: 0 },
-  items: { type: Map, of: Number, default: {} },
-}, { timestamps: true });
+const EntrySchema = new Schema(
+  {
+    laundryId: { type: Schema.Types.ObjectId, ref: "Customer", required: true },
+    date: { type: String, required: true },
+    commonQty: { type: Number, default: 0 },
+    items: { type: Map, of: Number, default: {} },
+  },
+  { timestamps: true },
+);
 
 EntrySchema.index({ laundryId: 1, date: 1 }, { unique: true });
 
@@ -134,10 +137,13 @@ app.get("/api/entries", async (req, res) => {
 
 app.post("/api/entries", async (req, res) => {
   const { laundryId, date, commonQty, items } = req.body;
-  if (!laundryId || !date) return res.status(400).json({ error: "Laundry and date required" });
+  if (!laundryId || !date)
+    return res.status(400).json({ error: "Laundry and date required" });
   const exists = await Entry.findOne({ laundryId, date });
   if (exists) {
-    return res.status(409).json({ error: "Entry already exists for this customer and date" });
+    return res
+      .status(409)
+      .json({ error: "Entry already exists for this customer and date" });
   }
   try {
     const entry = await Entry.create({
@@ -149,7 +155,50 @@ app.post("/api/entries", async (req, res) => {
     res.json(entry);
   } catch (err) {
     if (err?.code === 11000) {
-      return res.status(409).json({ error: "Entry already exists for this customer and date" });
+      return res
+        .status(409)
+        .json({ error: "Entry already exists for this customer and date" });
+    }
+    throw err;
+  }
+});
+
+app.put("/api/entries/:id", async (req, res) => {
+  const { laundryId, date, commonQty, items } = req.body;
+  if (!laundryId || !date)
+    return res.status(400).json({ error: "Laundry and date required" });
+
+  try {
+    // make sure we're not editing into a date/customer combo that already has a different entry
+    const conflict = await Entry.findOne({
+      laundryId,
+      date,
+      _id: { $ne: req.params.id },
+    });
+    if (conflict) {
+      return res
+        .status(409)
+        .json({ error: "Entry already exists for this customer and date" });
+    }
+
+    const entry = await Entry.findByIdAndUpdate(
+      req.params.id,
+      {
+        laundryId,
+        date,
+        commonQty: Number(commonQty || 0),
+        items: items || {},
+      },
+      { new: true, runValidators: true },
+    );
+
+    if (!entry) return res.status(404).json({ error: "Entry not found" });
+    res.json(entry);
+  } catch (err) {
+    if (err?.code === 11000) {
+      return res
+        .status(409)
+        .json({ error: "Entry already exists for this customer and date" });
     }
     throw err;
   }
@@ -162,12 +211,16 @@ app.delete("/api/entries/:id", async (req, res) => {
 
 app.get("/api/bill", async (req, res) => {
   const { laundryId, month } = req.query;
-  if (!laundryId || !month) return res.status(400).json({ error: "Laundry and month required" });
+  if (!laundryId || !month)
+    return res.status(400).json({ error: "Laundry and month required" });
 
   const customer = await Customer.findById(laundryId);
   const common = await Common.findOne();
   const rates = await Rate.find();
-  const entries = await Entry.find({ laundryId, date: new RegExp(`^${month}`) });
+  const entries = await Entry.find({
+    laundryId,
+    date: new RegExp(`^${month}`),
+  });
 
   let commonQty = 0;
   const itemTotals = {};
@@ -187,7 +240,11 @@ app.get("/api/bill", async (req, res) => {
   let activeCommonRate = Number(common?.rate || 0);
   if (customer) {
     const name = customer.name.replace(/\s+/g, "").toLowerCase();
-    if (name === "shriram" || (name.includes("shri") && name.includes("ram")) || name === "sachin") {
+    if (
+      name === "shriram" ||
+      (name.includes("shri") && name.includes("ram")) ||
+      name === "sachin"
+    ) {
       activeCommonRate = 3;
     } else if (name === "umesh") {
       activeCommonRate = 3.5;

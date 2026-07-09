@@ -1117,3 +1117,34 @@ input:focus, select:focus {
     text-align: right !important;
   }
 }
+  .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  padding: 0;
+}
+
+.modal-content {
+  background: var(--card);
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  padding: 20px;
+  box-shadow: var(--shadow-lg);
+}
+
+@media (min-width: 700px) {
+  .modal-overlay {
+    align-items: center;
+  }
+  .modal-content {
+    border-radius: var(--radius-lg);
+  }
+
+}

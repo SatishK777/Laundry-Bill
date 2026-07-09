@@ -133,6 +133,11 @@ export default function App() {
   const [entriesMonth, setEntriesMonth] = useState("");
   const [allEntries, setAllEntries] = useState([]);
   const [customerEntries, setCustomerEntries] = useState([]);
+  const [editingEntry, setEditingEntry] = useState(null);
+  const [editDate, setEditDate] = useState("");
+  const [editCommonQty, setEditCommonQty] = useState(0);
+  const [editItemQtys, setEditItemQtys] = useState({});
+  const [editSpecialSearch, setEditSpecialSearch] = useState("");
   const [selectedCustomerId, setSelectedCustomerId] = useState("");
   const [customerSearch, setCustomerSearch] = useState("");
   const [specialSearch, setSpecialSearch] = useState("");
@@ -170,8 +175,13 @@ export default function App() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    if (!res.ok) throw new Error("API error");
-    return res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data?.error || "API error");
+      err.status = res.status;
+      throw err;
+    }
+    return data;
   };
   const apiDelete = async (path) => {
     const res = await fetch(path, { method: "DELETE" });
@@ -631,7 +641,73 @@ export default function App() {
       timerProgressBar: true,
     });
   };
+  const openEditEntry = (entry) => {
+    setEditingEntry(entry);
+    setEditDate(entry.date);
+    setEditCommonQty(entry.commonQty || 0);
+    const itemsObj = {};
+    Object.entries(entry.items || {}).forEach(([id, qty]) => {
+      itemsObj[id] = qty;
+    });
+    setEditItemQtys(itemsObj);
+    setEditSpecialSearch("");
+  };
 
+  const closeEditEntry = () => {
+    setEditingEntry(null);
+    setEditDate("");
+    setEditCommonQty(0);
+    setEditItemQtys({});
+    setEditSpecialSearch("");
+  };
+
+  const handleUpdateEntry = async () => {
+    if (!editingEntry) return;
+    const items = {};
+    Object.entries(editItemQtys).forEach(([id, qty]) => {
+      if (Number(qty) > 0) items[id] = Number(qty);
+    });
+    try {
+      await apiPut(`/api/entries/${editingEntry._id}`, {
+        laundryId: editingEntry.laundryId,
+        date: editDate,
+        commonQty: Number(editCommonQty || 0),
+        items,
+      });
+      closeEditEntry();
+      if (selectedCustomerId) {
+        const data = await fetchEntries({ laundryId: selectedCustomerId });
+        setCustomerEntries(data);
+      }
+      if (view === "entries") {
+        await loadAllEntries();
+      }
+      await loadStats();
+      Swal.fire({
+        toast: true,
+        position: "top-end",
+        icon: "success",
+        title: "Entry updated / एंट्री अपडेट हो गई",
+        showConfirmButton: false,
+        timer: 1500,
+        timerProgressBar: true,
+      });
+    } catch (err) {
+      if (err?.status === 409) {
+        Swal.fire({
+          icon: "error",
+          title: "Only one entry allowed",
+          text: "इस ग्राहक के लिए इस तारीख पर पहले से एंट्री है",
+        });
+        return;
+      }
+      Swal.fire({
+        icon: "error",
+        title: "Could not update entry",
+        text: "एंट्री अपडेट नहीं हुई",
+      });
+    }
+  };
   const clearZeroOnFocus = (value, setter) => {
     if (String(value) === "0") setter("");
   };
@@ -2455,6 +2531,16 @@ export default function App() {
                                       )}
                                     </div>
                                     <button
+                                      className="small-btn"
+                                      style={{
+                                        padding: "6px 10px",
+                                        fontSize: 11,
+                                      }}
+                                      onClick={() => openEditEntry(e)}
+                                    >
+                                      Edit
+                                    </button>
+                                    <button
                                       className="danger-btn"
                                       style={{
                                         padding: "6px 10px",
@@ -2641,6 +2727,13 @@ export default function App() {
                             {money(calcAmount(e, rates, common?.rate))}
                           </div>
                           <button
+                            className="small-btn"
+                            style={{ padding: "6px 10px", fontSize: 11 }}
+                            onClick={() => openEditEntry(e)}
+                          >
+                            Edit
+                          </button>
+                          <button
                             className="danger-btn"
                             style={{ padding: "6px 10px", fontSize: 11 }}
                             onClick={() => handleDeleteEntry(e._id)}
@@ -2655,6 +2748,140 @@ export default function App() {
               ))}
           </div>
         </section>
+      )}
+      {editingEntry && (
+        <div className="modal-overlay" onClick={closeEditEntry}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="card-title">
+              Edit Entry / एंट्री संपादित करें
+              <span
+                style={{ fontSize: 12, color: "var(--muted)", fontWeight: 600 }}
+              >
+                {customers.find((c) => c._id === editingEntry.laundryId)
+                  ?.name || ""}
+              </span>
+            </div>
+
+            <label className="label">Entry Date / एंट्री तारीख</label>
+            <input
+              type="date"
+              value={editDate}
+              onChange={(e) => setEditDate(e.target.value)}
+            />
+
+            <div className="divider" />
+
+            <div className="group-box">
+              <div className="group-title">Common Items / सामान्य कपड़े</div>
+              <div className="qty-row">
+                <button
+                  className="qty-btn"
+                  onClick={() =>
+                    setEditCommonQty(Math.max(0, Number(editCommonQty) - 1))
+                  }
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  min="0"
+                  value={editCommonQty}
+                  onFocus={() =>
+                    clearZeroOnFocus(editCommonQty, setEditCommonQty)
+                  }
+                  onBlur={() =>
+                    restoreZeroOnBlur(editCommonQty, setEditCommonQty)
+                  }
+                  onChange={(e) => setEditCommonQty(e.target.value)}
+                />
+                <button
+                  className="qty-btn"
+                  onClick={() => setEditCommonQty(Number(editCommonQty) + 1)}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            <div className="divider" />
+
+            <label className="label">
+              Search Special Item / विशेष कपड़ा खोजें
+            </label>
+            <input
+              placeholder="Type item name / नाम लिखें..."
+              value={editSpecialSearch}
+              onChange={(e) => setEditSpecialSearch(e.target.value)}
+              onFocus={() => setEditSpecialSearch("")}
+            />
+
+            <div className="items-list">
+              {rates
+                .filter((item) =>
+                  `${item.en} ${item.hi}`
+                    .toLowerCase()
+                    .includes(editSpecialSearch.toLowerCase()),
+                )
+                .map((item) => {
+                  const qty = editItemQtys[item._id] ?? 0;
+                  const hasQty = Number(qty) > 0;
+                  return (
+                    <div
+                      className={`item-row ${hasQty ? "has-qty" : ""}`}
+                      key={item._id}
+                    >
+                      <div>
+                        <div className="item-name">
+                          {item.en} ({item.hi})
+                        </div>
+                        <div className="item-rate">
+                          Rate: {money(item.rate)}
+                        </div>
+                      </div>
+                      <input
+                        type="number"
+                        min="0"
+                        value={qty}
+                        onFocus={() =>
+                          clearZeroOnFocus(qty, (v) =>
+                            setEditItemQtys((prev) => ({
+                              ...prev,
+                              [item._id]: v,
+                            })),
+                          )
+                        }
+                        onBlur={() =>
+                          restoreZeroOnBlur(qty, (v) =>
+                            setEditItemQtys((prev) => ({
+                              ...prev,
+                              [item._id]: v,
+                            })),
+                          )
+                        }
+                        onChange={(e) =>
+                          setEditItemQtys((prev) => ({
+                            ...prev,
+                            [item._id]: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  );
+                })}
+            </div>
+
+            <div className="divider" />
+
+            <div style={{ display: "flex", gap: 10 }}>
+              <button className="secondary full" onClick={closeEditEntry}>
+                Cancel / रद्द करें
+              </button>
+              <button className="primary full" onClick={handleUpdateEntry}>
+                Save Changes / सेव करें
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
