@@ -1032,17 +1032,13 @@ input:focus, select:focus {
 }
 
 @media print {
-  .print-vertical-cut-line {
-    display: block !important;
-  }
-  
   .bill-print-page {
     width: 100% !important;
-    height: 86vh !important; /* Slightly shorter to prevent spilling bottom borders onto next page */
-    display: flex !important;
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: stretch !important; /* Force cards to have identical height */
+    height: 94vh !important; /* Force grid container to fill full landscape page height */
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
+    gap: 10px !important;
     page-break-after: always !important;
     break-after: page !important;
     margin-bottom: 0 !important;
@@ -1050,43 +1046,43 @@ input:focus, select:focus {
   }
   
   .bill-print-page .receipt-card {
-    width: 48% !important;
-    height: 100% !important; /* Card extends to page bottom, creating blank space */
+    width: 100% !important;
+    height: 100% !important; /* Fill grid cell exactly */
     margin: 0 !important;
     border: 1.5px dashed black !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
-    padding: 12px 14px !important;
+    padding: 8px 10px !important; /* Compact padding for 2x2 grid cell */
   }
 
   .bill-print-page .receipt-card .bill-header {
-    margin-bottom: 6px !important;
-    padding-bottom: 4px !important;
+    margin-bottom: 4px !important;
+    padding-bottom: 2px !important;
     border-bottom: 1px solid black !important;
   }
 
   .bill-print-page .receipt-card .bill-title {
-    font-size: 13px !important;
+    font-size: 11px !important;
     font-weight: bold !important;
     text-align: center !important;
   }
 
   .bill-print-page .receipt-card .bill-sub {
-    font-size: 9px !important;
+    font-size: 8px !important;
     text-align: center !important;
   }
 
   .bill-print-page .receipt-card .bill-meta {
-    font-size: 8.5px !important;
-    margin-bottom: 6px !important;
+    font-size: 8px !important;
+    margin-bottom: 4px !important;
     display: flex !important;
     justify-content: space-between !important;
   }
 
   .bill-print-page .receipt-card .bill-meta .bill-meta-title {
-    font-size: 10.5px !important;
+    font-size: 9px !important;
     font-weight: 800 !important;
     color: #000 !important;
   }
@@ -1098,10 +1094,10 @@ input:focus, select:focus {
   }
 
   .bill-print-page .receipt-card .bill-row {
-    font-size: 8px !important;
-    padding: 1.5px 0 !important; /* Tight spacing for entries */
+    font-size: 7.5px !important; /* Compact font to fit items list */
+    padding: 1.2px 0 !important;
     border-bottom: 0.5px solid #eee !important;
-    line-height: 1.15 !important;
+    line-height: 1.12 !important;
   }
 
   .bill-print-page .receipt-card .bill-row:last-child {
@@ -1109,10 +1105,10 @@ input:focus, select:focus {
   }
   
   .bill-print-page .receipt-card .bill-total {
-    font-size: 13px !important; /* Larger text for better readability */
+    font-size: 11px !important; /* Slightly larger text for clarity */
     font-weight: bold !important;
-    margin-top: 6px !important;
-    padding-top: 4px !important;
+    margin-top: 5px !important;
+    padding-top: 3px !important;
     border-top: 1.2px solid black !important;
     text-align: right !important;
   }

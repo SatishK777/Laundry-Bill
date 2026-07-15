@@ -1358,23 +1358,24 @@ export default function App() {
 
               <div className="all-bills-print-container">
                 {(() => {
-                  const pairs = [];
-                  for (let i = 0; i < billsList.length; i += 2) {
-                    pairs.push(billsList.slice(i, i + 2));
+                  const chunks = [];
+                  const chunkSize = 4;
+                  for (let i = 0; i < billsList.length; i += chunkSize) {
+                    chunks.push(billsList.slice(i, i + chunkSize));
                   }
-                  return pairs.map((pair, pageIdx) => (
+                  return chunks.map((chunk, pageIdx) => (
                     <div
                       className="bill-print-page"
                       key={`bill-page-${pageIdx}`}
                       style={{
                         pageBreakAfter:
-                          pageIdx < pairs.length - 1 ? "always" : "avoid",
+                          pageIdx < chunks.length - 1 ? "always" : "avoid",
                         breakAfter:
-                          pageIdx < pairs.length - 1 ? "page" : "avoid",
+                          pageIdx < chunks.length - 1 ? "page" : "avoid",
                       }}
                     >
-                      {pair[0] && (
-                        <div className="receipt-card">
+                      {chunk.map((singleBill, idx) => (
+                        <div className="receipt-card" key={`bill-receipt-${idx}`}>
                           <div
                             className="bill-header"
                             style={{
@@ -1414,8 +1415,8 @@ export default function App() {
                                 color: "#000",
                               }}
                             >
-                              {pair[0].customer}{" "}
-                              {pair[0].customerHi && `(${pair[0].customerHi})`}
+                              {singleBill.customer}{" "}
+                              {singleBill.customerHi && `(${singleBill.customerHi})`}
                             </div>
                             <div
                               className="bill-meta-title"
@@ -1425,12 +1426,12 @@ export default function App() {
                                 color: "#000",
                               }}
                             >
-                              {formatMonthOnly(pair[0].month)}
+                              {formatMonthOnly(singleBill.month)}
                             </div>
                           </div>
 
                           <div className="bill-table">
-                            {pair[0].rows.map((r, i) => (
+                            {singleBill.rows.map((r, i) => (
                               <div className="bill-row" key={`${r.name}-${i}`}>
                                 <div>{r.name}</div>
                                 <div>Qty: {r.qty}</div>
@@ -1449,124 +1450,10 @@ export default function App() {
                               fontWeight: "bold",
                             }}
                           >
-                            Total / कुल: {money(pair[0].totalAmount)}
+                            Total / कुल: {money(singleBill.totalAmount)}
                           </div>
                         </div>
-                      )}
-
-                      {pair.length === 2 && (
-                        <div
-                          className="print-vertical-cut-line"
-                          style={{
-                            borderLeft: "1.5px dashed var(--ink)",
-                            margin: "0 15px",
-                            position: "relative",
-                            alignSelf: "stretch",
-                          }}
-                        >
-                          <span
-                            style={{
-                              position: "absolute",
-                              top: "10%",
-                              left: "-8px",
-                              fontSize: "12px",
-                            }}
-                          >
-                            ✂️
-                          </span>
-                          <span
-                            style={{
-                              position: "absolute",
-                              bottom: "10%",
-                              left: "-8px",
-                              fontSize: "12px",
-                            }}
-                          >
-                            ✂️
-                          </span>
-                        </div>
-                      )}
-
-                      {pair[1] && (
-                        <div className="receipt-card">
-                          <div
-                            className="bill-header"
-                            style={{
-                              borderBottom: "none",
-                              marginBottom: "5px",
-                              paddingBottom: "0",
-                            }}
-                          >
-                            <div
-                              className="bill-title"
-                              style={{
-                                fontSize: "13px",
-                                letterSpacing: "1px",
-                                fontWeight: "bold",
-                              }}
-                            >
-                              OM GANESHAY NAMAH
-                            </div>
-                          </div>
-
-                          <div
-                            className="bill-meta-row"
-                            style={{
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "baseline",
-                              borderBottom: "2px solid black",
-                              paddingBottom: "5px",
-                              marginBottom: "8px",
-                            }}
-                          >
-                            <div
-                              className="bill-meta-title"
-                              style={{
-                                fontSize: "13px",
-                                fontWeight: "800",
-                                color: "#000",
-                              }}
-                            >
-                              {pair[1].customer}{" "}
-                              {pair[1].customerHi && `(${pair[1].customerHi})`}
-                            </div>
-                            <div
-                              className="bill-meta-title"
-                              style={{
-                                fontSize: "12px",
-                                fontWeight: "800",
-                                color: "#000",
-                              }}
-                            >
-                              {formatMonthOnly(pair[1].month)}
-                            </div>
-                          </div>
-
-                          <div className="bill-table">
-                            {pair[1].rows.map((r, i) => (
-                              <div className="bill-row" key={`${r.name}-${i}`}>
-                                <div>{r.name}</div>
-                                <div>Qty: {r.qty}</div>
-                                <div>{money(r.amount)}</div>
-                              </div>
-                            ))}
-                          </div>
-                          <div
-                            className="bill-total"
-                            style={{
-                              borderTop: "2px solid black",
-                              marginTop: "10px",
-                              paddingTop: "6px",
-                              textAlign: "right",
-                              fontSize: "13px",
-                              fontWeight: "bold",
-                            }}
-                          >
-                            Total / कुल: {money(pair[1].totalAmount)}
-                          </div>
-                        </div>
-                      )}
+                      ))}
                     </div>
                   ));
                 })()}
