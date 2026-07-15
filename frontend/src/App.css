@@ -1034,7 +1034,7 @@ input:focus, select:focus {
 @media print {
   .bill-print-page {
     width: 100% !important;
-    height: 94vh !important; /* Force grid container to fill full landscape page height */
+    height: 84vh !important; /* Calibrated to fit 2x2 grid with 0.4in page margins */
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     grid-template-rows: 1fr 1fr !important;
@@ -1043,6 +1043,7 @@ input:focus, select:focus {
     break-after: page !important;
     margin-bottom: 0 !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
   }
   
   .bill-print-page .receipt-card {
