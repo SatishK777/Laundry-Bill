@@ -2435,6 +2435,39 @@ export default function App() {
 
           {allEntries.length > 0 && (
             <div style={{ marginTop: 20 }}>
+              {/* Monthly Stats Summary Banner */}
+              <div className="no-print" style={{
+                background: 'var(--primary-light)',
+                border: '1px solid var(--primary)',
+                borderRadius: 'var(--radius-md)',
+                padding: '14px 18px',
+                marginBottom: '20px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                boxShadow: 'var(--shadow-sm)'
+              }}>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Total Monthly Income / कुल मासिक आय
+                  </div>
+                  <div style={{ fontSize: '24px', fontWeight: '850', color: 'var(--primary)', marginTop: '4px' }}>
+                    {money(allEntries.reduce((sum, e) => sum + calcAmount(e, rates, common?.rate), 0))}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '11px', fontWeight: 'bold', color: 'var(--ink-light)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                    Total Clothes / कुल कपड़े
+                  </div>
+                  <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--ink)', marginTop: '4px' }}>
+                    {allEntries.reduce((sum, e) => {
+                      const specialQty = Object.values(e.items || {}).reduce((s, q) => s + Number(q || 0), 0);
+                      return sum + Number(e.commonQty || 0) + specialQty;
+                    }, 0)}
+                  </div>
+                </div>
+              </div>
+
               <label className="label">Search (customer/item) / खोजें</label>
               <input
                 placeholder="Type name or item..."
