@@ -1569,47 +1569,7 @@ export default function App() {
                     </tr>
                   );
                 })}
-                <tr
-                  style={{
-                    borderTop: "2px solid var(--ink)",
-                    background: "var(--bg)",
-                  }}
-                >
-                  <td
-                    style={{
-                      padding: "12px 8px",
-                      fontWeight: 800,
-                      fontSize: 14,
-                    }}
-                  >
-                    Grand Total / कुल जोड़
-                  </td>
-                  <td
-                    style={{
-                      padding: "12px 8px",
-                      textAlign: "right",
-                      fontWeight: 800,
-                      fontSize: 14,
-                      color: "var(--success)",
-                    }}
-                  >
-                    {money(
-                      customers.reduce((grandSum, customer) => {
-                        const custEntries = summaryEntries.filter(
-                          (e) => e.laundryId === customer._id,
-                        );
-                        return (
-                          grandSum +
-                          custEntries.reduce(
-                            (sum, e) =>
-                              sum + calcAmount(e, rates, common?.rate),
-                            0,
-                          )
-                        );
-                      }, 0),
-                    )}
-                  </td>
-                </tr>
+
               </tbody>
             </table>
           </div>
@@ -1692,47 +1652,7 @@ export default function App() {
                     </tr>
                   );
                 })}
-                <tr
-                  style={{
-                    background: "#e2e8f0",
-                    borderTop: "2px solid black",
-                  }}
-                >
-                  <td
-                    style={{
-                      padding: "10px 8px",
-                      fontWeight: "bold",
-                      fontSize: "12px",
-                      borderRight: "1px solid black",
-                    }}
-                  >
-                    Grand Total / कुल जोड़
-                  </td>
-                  <td
-                    style={{
-                      padding: "10px 8px",
-                      textAlign: "right",
-                      fontWeight: "bold",
-                      fontSize: "12px",
-                    }}
-                  >
-                    {money(
-                      customers.reduce((grandSum, customer) => {
-                        const custEntries = summaryEntries.filter(
-                          (e) => e.laundryId === customer._id,
-                        );
-                        return (
-                          grandSum +
-                          custEntries.reduce(
-                            (sum, e) =>
-                              sum + calcAmount(e, rates, common?.rate),
-                            0,
-                          )
-                        );
-                      }, 0),
-                    )}
-                  </td>
-                </tr>
+
               </tbody>
             </table>
           </div>
