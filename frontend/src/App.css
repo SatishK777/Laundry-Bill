@@ -828,7 +828,7 @@ input:focus, select:focus {
     margin: 0 !important;
     padding: 0 !important;
   }
-  .tabs, .primary, .secondary, .card-title, .divider, .group-box, .label, input, select, .day-block, .day-entries, .sticky-save, header, nav, button {
+  .tabs, .primary, .secondary, .card-title, .divider, .group-box, .label, input, select, .day-block, .day-entries, .sticky-save, header, nav, button, .summary-table {
     display: none !important;
   }
   .card {
