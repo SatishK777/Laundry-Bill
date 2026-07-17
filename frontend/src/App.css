@@ -921,16 +921,8 @@ input:focus, select:focus {
     text-align: right;
   }
   .all-bills-print-container .receipt-card {
-    page-break-after: always;
-    break-after: page;
-    margin-bottom: 0 !important;
-    border: 1px solid black !important;
-    box-shadow: none !important;
-    padding: 20px !important;
-  }
-  .all-bills-print-container .receipt-card:last-child {
-    page-break-after: avoid;
-    break-after: avoid;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 }
 
