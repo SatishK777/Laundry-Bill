@@ -1040,40 +1040,42 @@ input:focus, select:focus {
 
 @media print {
   .bill-print-page {
-    width: 100vw !important;
-    height: 100vh !important; /* Force grid container to fill full A4 viewport height */
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    grid-template-rows: 1fr 1fr !important;
-    gap: 12px !important;
+    width: 210mm !important;
+    height: 297mm !important; /* Fixed A4 portrait page size */
+    padding: 10mm !important; /* Uniform page margins on every sheet */
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-content: flex-start !important;
+    gap: 8mm !important; /* Space between rows and columns */
     page-break-after: always !important;
     break-after: page !important;
-    margin-bottom: 0 !important;
-    box-sizing: border-box !important;
+    margin: 0 !important;
+    background: white !important;
     overflow: hidden !important;
-    padding: 0.4in !important; /* Repeatable page margins on every sheet */
   }
   
   .bill-print-page .receipt-card {
-    width: 100% !important;
-    height: 100% !important;
+    width: 91mm !important; /* Fits 2 columns within 210mm width */
+    height: 129mm !important; /* Strictly capped height to prevent row overflow page-splits */
     margin: 0 !important;
     border: 2px dashed black !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
-    padding: 12px 14px !important; /* Spacious padding */
+    padding: 10px 12px !important;
+    background: white !important;
   }
 
   .bill-print-page .receipt-card .bill-header {
-    margin-bottom: 6px !important;
-    padding-bottom: 4px !important;
+    margin-bottom: 4px !important;
+    padding-bottom: 2px !important;
     border-bottom: 2px solid black !important;
   }
 
   .bill-print-page .receipt-card .bill-title {
-    font-size: 13.5px !important;
+    font-size: 14px !important;
     font-weight: 900 !important;
     color: #000 !important;
     text-align: center !important;
@@ -1086,13 +1088,13 @@ input:focus, select:focus {
 
   .bill-print-page .receipt-card .bill-meta {
     font-size: 9px !important;
-    margin-bottom: 6px !important;
+    margin-bottom: 4px !important;
     display: flex !important;
     justify-content: space-between !important;
   }
 
   .bill-print-page .receipt-card .bill-meta .bill-meta-title {
-    font-size: 12.5px !important;
+    font-size: 13px !important;
     font-weight: 900 !important;
     color: #000 !important;
   }
@@ -1104,8 +1106,8 @@ input:focus, select:focus {
   }
 
   .bill-print-page .receipt-card .bill-row {
-    font-size: 10.5px !important; /* Readable, big text size */
-    font-weight: 750 !important; /* Bold, dark text */
+    font-size: 11px !important; /* Larger, readable size */
+    font-weight: 800 !important; /* Dark black text color */
     color: #000 !important;
     padding: 2.2px 0 !important;
     border-bottom: 0.8px solid #bbb !important;
@@ -1117,11 +1119,11 @@ input:focus, select:focus {
   }
   
   .bill-print-page .receipt-card .bill-total {
-    font-size: 13.5px !important; /* Large, bold total */
+    font-size: 14px !important; /* Big, bold total amount */
     font-weight: 900 !important;
     color: #000 !important;
-    margin-top: 8px !important;
-    padding-top: 5px !important;
+    margin-top: 6px !important;
+    padding-top: 4px !important;
     border-top: 2px solid black !important;
     text-align: right !important;
   }
