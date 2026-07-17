@@ -1040,24 +1040,24 @@ input:focus, select:focus {
 
 @media print {
   .bill-print-page {
-    width: 210mm !important;
-    height: 297mm !important; /* Fixed A4 portrait page size */
-    padding: 10mm !important; /* Uniform page margins on every sheet */
-    box-sizing: border-box !important;
+    width: 100% !important;
+    height: auto !important; /* Let height wrap content to prevent split page overflow */
     display: flex !important;
     flex-wrap: wrap !important;
+    justify-content: space-between !important;
     align-content: flex-start !important;
-    gap: 8mm !important; /* Space between rows and columns */
+    gap: 12px 4% !important; /* Vertical and horizontal gap */
     page-break-after: always !important;
     break-after: page !important;
     margin: 0 !important;
     background: white !important;
     overflow: hidden !important;
+    padding: 0 !important;
   }
   
   .bill-print-page .receipt-card {
-    width: 91mm !important; /* Fits 2 columns within 210mm width */
-    height: 129mm !important; /* Strictly capped height to prevent row overflow page-splits */
+    width: 48% !important; /* Flexible column width */
+    height: 120mm !important; /* Safe height to guarantee 2 rows fit on portrait sheet */
     margin: 0 !important;
     border: 2px dashed black !important;
     box-shadow: none !important;
