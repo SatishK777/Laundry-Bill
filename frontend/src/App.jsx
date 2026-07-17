@@ -790,13 +790,13 @@ export default function App() {
 
   const handlePrintAllBills = () => {
     const style = document.createElement("style");
-    style.id = "landscape-print-style";
+    style.id = "portrait-print-style";
     style.innerHTML =
-      "@page { size: landscape; margin: 0 !important; } body { margin: 0.4in !important; }";
+      "@page { size: portrait; margin: 0 !important; } body { margin: 0.4in !important; }";
     document.head.appendChild(style);
     window.print();
     setTimeout(() => {
-      const el = document.getElementById("landscape-print-style");
+      const el = document.getElementById("portrait-print-style");
       if (el) el.remove();
     }, 1000);
   };
