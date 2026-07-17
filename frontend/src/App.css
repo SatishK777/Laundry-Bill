@@ -1038,7 +1038,7 @@ input:focus, select:focus {
     flex-wrap: wrap !important;
     justify-content: space-between !important;
     align-content: flex-start !important;
-    gap: 6mm 4% !important; /* Vertical and horizontal gap */
+    gap: 10mm 4% !important; /* Spacious vertical and horizontal gaps */
     page-break-after: always !important;
     break-after: page !important;
     margin: 0 !important;
@@ -1049,14 +1049,14 @@ input:focus, select:focus {
   
   .bill-print-page .receipt-card {
     width: 48% !important; /* Flexible column width */
-    height: 105mm !important; /* Strictly safe height to fit 4 cards on any printer settings */
+    height: 130mm !important; /* Stretches cards to use the full page height */
     margin: 0 !important;
     border: 2px dashed black !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
-    padding: 8px 10px !important; /* Tight padding to save space */
+    padding: 10px 12px !important;
     background: white !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
