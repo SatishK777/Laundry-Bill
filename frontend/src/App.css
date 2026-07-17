@@ -1046,7 +1046,7 @@ input:focus, select:focus {
     flex-wrap: wrap !important;
     justify-content: space-between !important;
     align-content: flex-start !important;
-    gap: 12px 4% !important; /* Vertical and horizontal gap */
+    gap: 6mm 4% !important; /* Vertical and horizontal gap */
     page-break-after: always !important;
     break-after: page !important;
     margin: 0 !important;
@@ -1057,15 +1057,17 @@ input:focus, select:focus {
   
   .bill-print-page .receipt-card {
     width: 48% !important; /* Flexible column width */
-    height: 120mm !important; /* Safe height to guarantee 2 rows fit on portrait sheet */
+    height: 105mm !important; /* Strictly safe height to fit 4 cards on any printer settings */
     margin: 0 !important;
     border: 2px dashed black !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
     box-sizing: border-box !important;
-    padding: 10px 12px !important;
+    padding: 8px 10px !important; /* Tight padding to save space */
     background: white !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .bill-print-page .receipt-card .bill-header {
@@ -1109,7 +1111,7 @@ input:focus, select:focus {
     font-size: 11px !important; /* Larger, readable size */
     font-weight: 800 !important; /* Dark black text color */
     color: #000 !important;
-    padding: 2.2px 0 !important;
+    padding: 1.6px 0 !important;
     border-bottom: 0.8px solid #bbb !important;
     line-height: 1.12 !important;
   }
