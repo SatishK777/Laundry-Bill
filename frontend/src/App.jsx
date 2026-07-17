@@ -792,7 +792,7 @@ export default function App() {
     const style = document.createElement("style");
     style.id = "portrait-print-style";
     style.innerHTML =
-      "@page { size: portrait; margin: 0 !important; } body { margin: 0 !important; padding: 0 !important; }";
+      "@page { size: A4 portrait; margin: 0 !important; } html, body { width: 210mm !important; margin: 0 !important; padding: 0 !important; }";
     document.head.appendChild(style);
     window.print();
     setTimeout(() => {

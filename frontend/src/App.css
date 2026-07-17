@@ -1031,27 +1031,62 @@ input:focus, select:focus {
 }
 
 @media print {
+  .all-bills-print-container {
+    width: 210mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
   .bill-print-page {
-    width: 100% !important;
-    height: auto !important; /* Let height wrap content to prevent split page overflow */
-    display: flex !important;
-    flex-wrap: wrap !important;
-    justify-content: space-between !important;
-    align-content: flex-start !important;
-    gap: 10mm 4% !important; /* Spacious vertical and horizontal gaps */
+    width: 210mm !important;
+    height: 297mm !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    grid-template-rows: 1fr 1fr !important;
+    gap: 5mm 5mm !important;
     page-break-after: always !important;
     break-after: page !important;
     margin: 0 !important;
     background: white !important;
     overflow: hidden !important;
-    padding: 0 !important;
+    padding: 5mm !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+  }
+
+  .bill-print-page:last-child {
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+  }
+
+  .bill-print-page::before,
+  .bill-print-page::after {
+    content: "" !important;
+    position: absolute !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
+  }
+
+  .bill-print-page::before {
+    top: 5mm !important;
+    bottom: 5mm !important;
+    left: 50% !important;
+    border-left: 1px dashed #000 !important;
+  }
+
+  .bill-print-page::after {
+    left: 5mm !important;
+    right: 5mm !important;
+    top: 50% !important;
+    border-top: 1px dashed #000 !important;
   }
   
   .bill-print-page .receipt-card {
-    width: 48% !important; /* Flexible column width */
-    height: 130mm !important; /* Stretches cards to use the full page height */
+    width: 100% !important;
+    height: 100% !important;
     margin: 0 !important;
     border: 2px dashed black !important;
+    border-radius: 8px !important;
     box-shadow: none !important;
     display: flex !important;
     flex-direction: column !important;
@@ -1060,6 +1095,8 @@ input:focus, select:focus {
     background: white !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
+    position: relative !important;
+    z-index: 1 !important;
   }
 
   .bill-print-page .receipt-card .bill-header {
@@ -1069,7 +1106,7 @@ input:focus, select:focus {
   }
 
   .bill-print-page .receipt-card .bill-title {
-    font-size: 14px !important;
+    font-size: 16px !important;
     font-weight: 900 !important;
     color: #000 !important;
     text-align: center !important;
@@ -1088,7 +1125,7 @@ input:focus, select:focus {
   }
 
   .bill-print-page .receipt-card .bill-meta .bill-meta-title {
-    font-size: 13px !important;
+    font-size: 15px !important;
     font-weight: 900 !important;
     color: #000 !important;
   }
@@ -1100,7 +1137,7 @@ input:focus, select:focus {
   }
 
   .bill-print-page .receipt-card .bill-row {
-    font-size: 11px !important; /* Larger, readable size */
+    font-size: 13px !important;
     font-weight: 800 !important; /* Dark black text color */
     color: #000 !important;
     padding: 1.6px 0 !important;
@@ -1113,7 +1150,7 @@ input:focus, select:focus {
   }
   
   .bill-print-page .receipt-card .bill-total {
-    font-size: 14px !important; /* Big, bold total amount */
+    font-size: 28px !important;
     font-weight: 900 !important;
     color: #000 !important;
     margin-top: 6px !important;
