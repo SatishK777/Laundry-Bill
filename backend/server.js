@@ -177,10 +177,14 @@ app.post("/api/entries/shift-date", async (req, res) => {
 });
 
 app.get("/api/entries", async (req, res) => {
-  const { laundryId, month } = req.query;
+  const { laundryId, month, startDate, endDate } = req.query;
   const query = {};
   if (laundryId) query.laundryId = laundryId;
-  if (month) query.date = new RegExp(`^${month}`);
+  if (startDate && endDate) {
+    query.date = { $gte: startDate, $lte: endDate };
+  } else if (month) {
+    query.date = new RegExp(`^${month}`);
+  }
   const entries = await Entry.find(query);
   res.json(entries);
 });
@@ -260,17 +264,24 @@ app.delete("/api/entries/:id", async (req, res) => {
 });
 
 app.get("/api/bill", async (req, res) => {
-  const { laundryId, month } = req.query;
-  if (!laundryId || !month)
-    return res.status(400).json({ error: "Laundry and month required" });
+  const { laundryId, month, startDate, endDate } = req.query;
+  if (!laundryId)
+    return res.status(400).json({ error: "Laundry ID is required" });
+  if (!month && (!startDate || !endDate)) {
+    return res.status(400).json({ error: "Either month or date range (startDate & endDate) is required" });
+  }
 
   const customer = await Customer.findById(laundryId);
   const common = await Common.findOne();
   const rates = await Rate.find();
-  const entries = await Entry.find({
-    laundryId,
-    date: new RegExp(`^${month}`),
-  });
+
+  const query = { laundryId };
+  if (startDate && endDate) {
+    query.date = { $gte: startDate, $lte: endDate };
+  } else {
+    query.date = new RegExp(`^${month}`);
+  }
+  const entries = await Entry.find(query);
 
   let commonQty = 0;
   const itemTotals = {};
@@ -319,6 +330,8 @@ app.get("/api/bill", async (req, res) => {
   res.json({
     customer: customer ? customer.name : "",
     month,
+    startDate,
+    endDate,
     rows,
     totalAmount,
   });

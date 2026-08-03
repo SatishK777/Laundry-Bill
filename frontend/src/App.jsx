@@ -120,6 +120,8 @@ export default function App() {
   const [monthStats, setMonthStats] = useState({ entries: 0, amount: 0 });
   const [entryDate, setEntryDate] = useState("");
   const [billMonth, setBillMonth] = useState("");
+  const [billStartDate, setBillStartDate] = useState("");
+  const [billEndDate, setBillEndDate] = useState("");
   const [entryLaundry, setEntryLaundry] = useState("");
   const [billLaundry, setBillLaundry] = useState("");
   const [entrySearch, setEntrySearch] = useState("");
@@ -330,11 +332,22 @@ export default function App() {
   };
 
   const handleGenerateBill = async () => {
-    if (!billLaundry || !billMonth) return;
+    if (!billLaundry) return;
+    const isRange = !!(billStartDate && billEndDate);
+    if (!billMonth && !isRange) {
+      Swal.fire({
+        icon: "warning",
+        title: "Selection Required / चयन आवश्यक",
+        text: "Please select either a Month or a Date Range / कृपया महीना या तारीख अवधि चुनें"
+      });
+      return;
+    }
+
     try {
-      const data = await apiGet(
-        `/api/bill?laundryId=${billLaundry}&month=${billMonth}`,
-      );
+      const url = isRange
+        ? `/api/bill?laundryId=${billLaundry}&startDate=${billStartDate}&endDate=${billEndDate}`
+        : `/api/bill?laundryId=${billLaundry}&month=${billMonth}`;
+      const data = await apiGet(url);
 
       let hiName = "";
       try {
@@ -367,9 +380,20 @@ export default function App() {
   };
 
   const handleGenerateAllBills = async () => {
-    if (!billMonth) return;
+    const isRange = !!(billStartDate && billEndDate);
+    if (!billMonth && !isRange) {
+      Swal.fire({
+        icon: "warning",
+        title: "Selection Required / चयन आवश्यक",
+        text: "Please select either a Month or a Date Range / कृपया महीना या तारीख अवधि चुनें"
+      });
+      return;
+    }
     try {
-      const entries = await apiGet(`/api/entries?month=${billMonth}`);
+      const url = isRange
+        ? `/api/entries?startDate=${billStartDate}&endDate=${billEndDate}`
+        : `/api/entries?month=${billMonth}`;
+      const entries = await apiGet(url);
 
       const billPromises = customers.map(async (customer) => {
         const custEntries = entries.filter((e) => e.laundryId === customer._id);
@@ -434,7 +458,9 @@ export default function App() {
         return {
           customer: customer.name,
           customerHi: hiName,
-          month: billMonth,
+          month: isRange ? "" : billMonth,
+          startDate: isRange ? billStartDate : null,
+          endDate: isRange ? billEndDate : null,
           rows,
           totalAmount,
         };
@@ -874,7 +900,13 @@ export default function App() {
       "दिसंबर",
     ];
     const idx = parseInt(month, 10) - 1;
-    return `${monthsEn[idx]} ${year} / ${monthsHi[idx]} ${year}`;
+    return `${monthsHi[idx]} ${year}`;
+  };
+
+  const formatDateHindi = (dateStr) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    return `${day}-${month}-${year}`;
   };
 
   const formatMonthOnly = (monthStr) => {
@@ -1251,8 +1283,59 @@ export default function App() {
           <input
             type="month"
             value={billMonth}
-            onChange={(e) => setBillMonth(e.target.value)}
+            onChange={(e) => {
+              setBillMonth(e.target.value);
+              if (e.target.value) {
+                setBillStartDate("");
+                setBillEndDate("");
+              }
+            }}
           />
+
+          <div
+            style={{
+              textAlign: "center",
+              margin: "12px 0",
+              color: "var(--muted)",
+              fontWeight: "bold",
+              fontSize: "12px",
+            }}
+          >
+            — OR / या —
+          </div>
+
+          <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+            <div style={{ flex: 1 }}>
+              <label className="label" style={{ fontSize: "11px", marginBottom: "4px" }}>
+                From Date / प्रारंभिक तारीख (Optional)
+              </label>
+              <input
+                type="date"
+                value={billStartDate}
+                onChange={(e) => {
+                  setBillStartDate(e.target.value);
+                  if (e.target.value) {
+                    setBillMonth("");
+                  }
+                }}
+              />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label className="label" style={{ fontSize: "11px", marginBottom: "4px" }}>
+                To Date / अंतिम तारीख (Optional)
+              </label>
+              <input
+                type="date"
+                value={billEndDate}
+                onChange={(e) => {
+                  setBillEndDate(e.target.value);
+                  if (e.target.value) {
+                    setBillMonth("");
+                  }
+                }}
+              />
+            </div>
+          </div>
 
           <div className="button-grid">
             <button className="primary" onClick={handleGenerateBill}>
@@ -1330,7 +1413,9 @@ export default function App() {
                   className="bill-meta-title"
                   style={{ fontSize: "12px", fontWeight: "800", color: "#000" }}
                 >
-                  {formatMonthOnly(bill.month)}
+                  {bill.startDate && bill.endDate
+                    ? `${formatDateHindi(bill.startDate)} से ${formatDateHindi(bill.endDate)}`
+                    : formatMonthOnly(bill.month)}
                 </div>
               </div>
 
@@ -1467,7 +1552,9 @@ export default function App() {
                                 color: "#000",
                               }}
                             >
-                              {formatMonthOnly(singleBill.month)}
+                              {singleBill.startDate && singleBill.endDate
+                                ? `${formatDateHindi(singleBill.startDate)} से ${formatDateHindi(singleBill.endDate)}`
+                                : formatMonthOnly(singleBill.month)}
                             </div>
                           </div>
 
