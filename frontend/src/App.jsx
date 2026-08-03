@@ -738,6 +738,47 @@ export default function App() {
     setAllEntries(data);
   };
 
+  const handleShiftDate = async (oldDate) => {
+    const { value: newDate } = await Swal.fire({
+      title: "Shift Entries Date / तारीख बदलें",
+      html: `सभी एंट्री को <strong>${oldDate}</strong> से नई तारीख पर ट्रांसफर करें:`,
+      input: "date",
+      inputValue: oldDate,
+      showCancelButton: true,
+      confirmButtonText: "Shift / बदलें",
+      cancelButtonText: "Cancel / रद्द",
+      inputValidator: (value) => {
+        if (!value) {
+          return "You need to select a date! / आपको तारीख चुननी होगी!";
+        }
+        if (value === oldDate) {
+          return "Please select a different date! / कृपया दूसरी तारीख चुनें!";
+        }
+      }
+    });
+
+    if (newDate) {
+      try {
+        Swal.showLoading();
+        const result = await apiPost("/api/entries/shift-date", { oldDate, newDate });
+        Swal.fire({
+          icon: "success",
+          title: "Date Shifted / तारीख बदली गई",
+          text: `Moved / ट्रांसफर: ${result.shiftedCount || 0}, Merged / मर्ज: ${result.mergedCount || 0}`,
+          timer: 2500,
+          showConfirmButton: true,
+        });
+        await loadAllEntries();
+      } catch (err) {
+        Swal.fire({
+          icon: "error",
+          title: "Failed / विफल",
+          text: err.message || "Could not shift entries",
+        });
+      }
+    }
+  };
+
   const loadSummaryData = async () => {
     if (!summaryMonth) return;
     const data = await fetchEntries({ month: summaryMonth });
@@ -2308,7 +2349,7 @@ export default function App() {
                               {entries.length} entries
                             </div>
                           </div>
-                          <div
+                           <div
                             className="day-right"
                             style={{
                               display: "flex",
@@ -2316,6 +2357,34 @@ export default function App() {
                               gap: 8,
                             }}
                           >
+                            <button
+                              className="small-btn secondary"
+                              style={{
+                                padding: "4px 8px",
+                                fontSize: "10.5px",
+                                marginRight: "4px",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px"
+                              }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShiftDate(date);
+                              }}
+                            >
+                              <svg
+                                width="12"
+                                height="12"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.5"
+                              >
+                                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                                <path d="m15 5 4 4" />
+                              </svg>
+                              Shift Date / तारीख बदलें
+                            </button>
                             <span>{money(dayTotal)}</span>
                             <svg
                               width="14"

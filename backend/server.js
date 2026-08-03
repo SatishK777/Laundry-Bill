@@ -126,6 +126,56 @@ app.delete("/api/rates/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
+app.post("/api/entries/shift-date", async (req, res) => {
+  const { oldDate, newDate } = req.body;
+  if (!oldDate || !newDate) {
+    return res.status(400).json({ error: "oldDate and newDate are required" });
+  }
+  if (oldDate === newDate) {
+    return res.status(400).json({ error: "Dates must be different" });
+  }
+
+  try {
+    const oldEntries = await Entry.find({ date: oldDate });
+    if (oldEntries.length === 0) {
+      return res.status(404).json({ error: "No entries found on oldDate" });
+    }
+
+    let shifted = 0;
+    let merged = 0;
+
+    for (const oldEntry of oldEntries) {
+      const conflict = await Entry.findOne({ laundryId: oldEntry.laundryId, date: newDate });
+      if (!conflict) {
+        oldEntry.date = newDate;
+        await oldEntry.save();
+        shifted++;
+      } else {
+        conflict.commonQty = Number(conflict.commonQty || 0) + Number(oldEntry.commonQty || 0);
+        
+        const mergedItems = conflict.items ? new Map(conflict.items) : new Map();
+        if (oldEntry.items) {
+          const oldItemsObj = oldEntry.items instanceof Map ? Object.fromEntries(oldEntry.items) : oldEntry.items;
+          for (const [itemId, qty] of Object.entries(oldItemsObj)) {
+            const currentQty = mergedItems.get(itemId) || 0;
+            mergedItems.set(itemId, currentQty + Number(qty || 0));
+          }
+        }
+        conflict.items = mergedItems;
+        await conflict.save();
+
+        await Entry.findByIdAndDelete(oldEntry._id);
+        merged++;
+      }
+    }
+
+    res.json({ ok: true, shiftedCount: shifted, mergedCount: merged });
+  } catch (err) {
+    console.error("Failed to shift date", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 app.get("/api/entries", async (req, res) => {
   const { laundryId, month } = req.query;
   const query = {};
