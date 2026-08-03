@@ -135,6 +135,38 @@ export default function App() {
   const [entriesMonth, setEntriesMonth] = useState("");
   const [allEntries, setAllEntries] = useState([]);
   const [customerEntries, setCustomerEntries] = useState([]);
+  const [customerTranslations, setCustomerTranslations] = useState({});
+
+  useEffect(() => {
+    const translateCustomers = async () => {
+      const newTranslations = { ...customerTranslations };
+      let changed = false;
+      for (const customer of customers) {
+        if (!newTranslations[customer._id]) {
+          let hiName = customer.name;
+          try {
+            const res = await fetch(
+              `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=hi&dt=t&q=${encodeURIComponent(customer.name)}`
+            );
+            if (res.ok) {
+              const transData = await res.json();
+              hiName = transData[0][0][0] || customer.name;
+            }
+          } catch (e) {
+            console.error("Failed to translate customer name", e);
+          }
+          newTranslations[customer._id] = hiName;
+          changed = true;
+        }
+      }
+      if (changed) {
+        setCustomerTranslations(newTranslations);
+      }
+    };
+    if (customers.length > 0) {
+      translateCustomers();
+    }
+  }, [customers]);
   const [editingEntry, setEditingEntry] = useState(null);
   const [editDate, setEditDate] = useState("");
   const [editCommonQty, setEditCommonQty] = useState(0);
@@ -1677,11 +1709,12 @@ export default function App() {
                       <td
                         style={{
                           padding: "10px 8px",
-                          fontWeight: 600,
-                          fontSize: 13,
+                          fontWeight: "bold",
+                          fontSize: "14px",
+                          color: "#000",
                         }}
                       >
-                        {customer.name}
+                        {customerTranslations[customer._id] || customer.name}
                       </td>
                       <td
                         style={{
@@ -1759,13 +1792,14 @@ export default function App() {
                     >
                       <td
                         style={{
-                          padding: "8px",
-                          fontSize: "10px",
+                          padding: "4.5px 8px",
+                          fontSize: "12.5px",
                           fontWeight: "bold",
+                          color: "#000",
                           borderRight: "1px solid black",
                         }}
                       >
-                        {customer.name}
+                        {customerTranslations[customer._id] || customer.name}
                       </td>
                       <td
                         style={{
