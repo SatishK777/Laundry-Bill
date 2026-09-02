@@ -4,9 +4,10 @@ import Swal from "sweetalert2";
 const money = (n) => `₹${Number(n || 0).toFixed(0)}`;
 
 // Reusable Custom Searchable Select for Customers
-function SearchableSelect({ items, selectedId, onChange, placeholder }) {
+function SearchableSelect({ items, selectedId, onChange, placeholder, inputRef, onSelectNext }) {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const dropdownRef = useRef(null);
 
   const selectedItem = items.find((item) => item._id === selectedId);
@@ -23,12 +24,38 @@ function SearchableSelect({ items, selectedId, onChange, placeholder }) {
     item.name.toLowerCase().includes(search.toLowerCase()),
   );
 
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setIsOpen(true);
+      setHighlightedIndex((prev) =>
+        prev < filteredItems.length - 1 ? prev + 1 : 0
+      );
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setIsOpen(true);
+      setHighlightedIndex((prev) =>
+        prev > 0 ? prev - 1 : filteredItems.length - 1
+      );
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (filteredItems.length > 0) {
+        const itemToSelect = filteredItems[highlightedIndex] || filteredItems[0];
+        onChange(itemToSelect._id);
+        setSearch(itemToSelect.name);
+        setIsOpen(false);
+        if (onSelectNext) onSelectNext();
+      }
+    } else if (e.key === "Escape") {
+      setIsOpen(false);
+    }
+  };
+
   // Close dropdown on click outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
-        // Restore label
         if (selectedItem) {
           setSearch(selectedItem.name);
         } else {
@@ -43,13 +70,16 @@ function SearchableSelect({ items, selectedId, onChange, placeholder }) {
   return (
     <div className="search-select-container" ref={dropdownRef}>
       <input
+        ref={inputRef}
         type="text"
         className="search-select-input"
         placeholder={placeholder}
         value={search}
+        onKeyDown={handleKeyDown}
         onChange={(e) => {
           setSearch(e.target.value);
           setIsOpen(true);
+          setHighlightedIndex(0);
           const match = items.find(
             (item) => item.name.toLowerCase() === e.target.value.toLowerCase(),
           );
@@ -62,6 +92,7 @@ function SearchableSelect({ items, selectedId, onChange, placeholder }) {
         onFocus={() => {
           setIsOpen(true);
           setSearch("");
+          setHighlightedIndex(0);
         }}
       />
       <div className="search-select-arrow">
@@ -85,16 +116,17 @@ function SearchableSelect({ items, selectedId, onChange, placeholder }) {
       {isOpen && (
         <div className="search-select-dropdown">
           {filteredItems.length > 0 ? (
-            filteredItems.map((item) => (
+            filteredItems.map((item, idx) => (
               <div
                 key={item._id}
                 className={`search-select-item ${
-                  item._id === selectedId ? "selected" : ""
+                  idx === highlightedIndex ? "selected" : ""
                 }`}
                 onClick={() => {
                   onChange(item._id);
                   setSearch(item.name);
                   setIsOpen(false);
+                  if (onSelectNext) onSelectNext();
                 }}
               >
                 {item.name}
@@ -136,6 +168,10 @@ export default function App() {
   const [allEntries, setAllEntries] = useState([]);
   const [customerEntries, setCustomerEntries] = useState([]);
   const [customerTranslations, setCustomerTranslations] = useState({});
+
+  const customerInputRef = useRef(null);
+  const commonQtyInputRef = useRef(null);
+  const specialSearchInputRef = useRef(null);
 
   useEffect(() => {
     const translateCustomers = async () => {
@@ -307,6 +343,14 @@ export default function App() {
     if (common && rates.length) loadStats();
   }, [common, rates]);
 
+  useEffect(() => {
+    if (view === "entry") {
+      setTimeout(() => {
+        customerInputRef.current?.focus();
+      }, 100);
+    }
+  }, [view]);
+
   // Sync selection search values automatically if selection is loaded
   useEffect(() => {
     if (customers.length) {
@@ -321,12 +365,23 @@ export default function App() {
     }
   }, [customers, entryLaundry, billLaundry]);
 
-  const handleAddEntry = async () => {
-    if (!entryLaundry || !entryDate) return;
+  const handleAddEntry = async (autoNext = true) => {
+    if (!entryLaundry || !entryDate) {
+      Swal.fire({
+        icon: "warning",
+        title: "Select Customer & Date / ग्राहक और तारीख चुनें",
+        text: "Please select a customer and entry date / कृपया ग्राहक और तारीख चुनें",
+      });
+      return;
+    }
     const items = {};
     Object.entries(itemQtys).forEach(([id, qty]) => {
       if (Number(qty) > 0) items[id] = Number(qty);
     });
+
+    const selectedCust = customers.find((c) => c._id === entryLaundry);
+    const custName = selectedCust ? (customerTranslations[selectedCust._id] || selectedCust.name) : "";
+
     try {
       await apiPost("/api/entries", {
         laundryId: entryLaundry,
@@ -336,32 +391,52 @@ export default function App() {
       });
       setCommonQty(0);
       setItemQtys({});
+      setSpecialSearch("");
+      if (autoNext) {
+        setEntryLaundry("");
+      }
       await loadStats();
       Swal.fire({
         toast: true,
         position: "top-end",
         icon: "success",
-        title: "Entry saved / एंट्री सेव हो गई",
+        title: `Saved: ${custName} / एंट्री सेव हो गई`,
         showConfirmButton: false,
         timer: 1500,
         timerProgressBar: true,
       });
+      if (autoNext && customerInputRef.current) {
+        setTimeout(() => {
+          customerInputRef.current?.focus();
+        }, 100);
+      }
     } catch (err) {
       if (err?.status === 409) {
         Swal.fire({
           icon: "error",
-          title: "Only one entry allowed",
+          title: "Only one entry allowed / केवल एक एंट्री",
           text: "इस ग्राहक के लिए इस तारीख पर पहले से एंट्री है",
         });
         return;
       }
       Swal.fire({
         icon: "error",
-        title: "Could not save entry",
+        title: "Could not save entry / एंट्री सेव नहीं हुई",
         text: "एंट्री सेव नहीं हुई",
       });
     }
   };
+
+  useEffect(() => {
+    const handleGlobalKeyDown = (e) => {
+      if (view === "entry" && (e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        handleAddEntry(true);
+      }
+    };
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [view, entryLaundry, entryDate, commonQty, itemQtys]);
 
   const handleGenerateBill = async () => {
     if (!billLaundry) return;
@@ -1173,6 +1248,8 @@ export default function App() {
             selectedId={entryLaundry}
             onChange={(id) => setEntryLaundry(id)}
             placeholder="Search customer... / ग्राहक खोजें..."
+            inputRef={customerInputRef}
+            onSelectNext={() => commonQtyInputRef.current?.focus()}
           />
 
           <label className="label">Entry Date / एंट्री तारीख</label>
@@ -1194,12 +1271,19 @@ export default function App() {
                 -
               </button>
               <input
+                ref={commonQtyInputRef}
                 type="number"
                 min="0"
                 value={commonQty}
                 onFocus={() => clearZeroOnFocus(commonQty, setCommonQty)}
                 onBlur={() => restoreZeroOnBlur(commonQty, setCommonQty)}
                 onChange={(e) => setCommonQty(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddEntry(true);
+                  }
+                }}
               />
               <button
                 className="qty-btn"
@@ -1216,6 +1300,7 @@ export default function App() {
             Search Special Item / विशेष कपड़ा खोजें
           </label>
           <input
+            ref={specialSearchInputRef}
             placeholder="Type item name / नाम लिखें..."
             value={specialSearch}
             onChange={(e) => setSpecialSearch(e.target.value)}
@@ -1279,8 +1364,8 @@ export default function App() {
             </span>
           </div>
 
-          <div className="sticky-save">
-            <button className="primary full" onClick={handleAddEntry}>
+          <div className="sticky-save" style={{ display: "flex", gap: "10px" }}>
+            <button className="primary" style={{ flex: 2 }} onClick={() => handleAddEntry(true)}>
               <svg
                 width="16"
                 height="16"
@@ -1289,11 +1374,13 @@ export default function App() {
                 stroke="currentColor"
                 strokeWidth="2.5"
               >
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-                <polyline points="17 21 17 13 7 13 7 21" />
-                <polyline points="7 3 7 8 15 8" />
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
               </svg>
-              Save Entry / सेव करें
+              Save & Next / सेव और अगला
+            </button>
+            <button className="secondary" style={{ flex: 1 }} onClick={() => handleAddEntry(false)}>
+              Save / सिर्फ सेव
             </button>
           </div>
         </section>
