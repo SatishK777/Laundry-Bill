@@ -1833,7 +1833,7 @@ export default function App() {
                   className="bill-note"
                   style={{
                     borderTop: "1px dashed black",
-                    marginTop: "8px",
+                    marginTop: "auto",
                     paddingTop: "6px",
                     textAlign: "left",
                     fontSize: "12px",
@@ -1990,7 +1990,7 @@ export default function App() {
                               className="bill-note"
                               style={{
                                 borderTop: "1px dashed black",
-                                marginTop: "6px",
+                                marginTop: "auto",
                                 paddingTop: "4px",
                                 textAlign: "left",
                                 fontSize: "11px",

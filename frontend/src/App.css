@@ -1163,8 +1163,8 @@ input:focus, select:focus {
     font-size: 11px !important;
     font-weight: 800 !important;
     color: #000 !important;
-    margin-top: 4px !important;
-    padding-top: 3px !important;
+    margin-top: auto !important;
+    padding-top: 4px !important;
     border-top: 1px dashed black !important;
     text-align: left !important;
     line-height: 1.2 !important;
