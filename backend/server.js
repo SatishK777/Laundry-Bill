@@ -342,6 +342,10 @@ app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
 // Catch-all route to serve the React SPA index.html for non-API routes
 app.get("*", (req, res) => {
+  if (req.path.startsWith("/assets/")) {
+    return res.status(404).send("Asset not found");
+  }
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
   res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
 });
 
