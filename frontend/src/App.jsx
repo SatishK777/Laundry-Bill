@@ -3,6 +3,47 @@ import Swal from "sweetalert2";
 
 const money = (n) => `₹${Number(n || 0).toFixed(0)}`;
 
+// Helper to parse spoken Hindi & English numbers to integers
+function parseHindiNumber(text) {
+  if (!text) return 0;
+  const digitMatch = text.match(/\d+/);
+  if (digitMatch) return parseInt(digitMatch[0], 10);
+
+  const numMap = {
+    "शून्य": 0, "जीरो": 0, "zero": 0,
+    "एक": 1, "वन": 1, "one": 1,
+    "दो": 2, "टू": 2, "two": 2,
+    "तीन": 3, "थ्री": 3, "three": 3,
+    "चार": 4, "फोर": 4, "four": 4,
+    "पांच": 5, "पाँच": 5, "फाइव": 5, "five": 5,
+    "छह": 6, "छः": 6, "सिक्स": 6, "six": 6,
+    "सात": 7, "सेवन": 7, "seven": 7,
+    "आठ": 8, "एट": 8, "eight": 8,
+    "नौ": 9, "नाइन": 9, "nine": 9,
+    "दस": 10, "टेन": 10, "ten": 10,
+    "ग्यारह": 11, "बारह": 12, "तेरह": 13, "चौदह": 14, "पंद्रह": 15,
+    "सोलह": 16, "सत्रह": 17, "अठारह": 18, "उन्नीस": 19, "बीस": 20,
+    "तीस": 30, "चालीस": 40, "पचास": 50, "साठ": 60, "सत्तर": 70, "अस्सी": 80, "नब्बे": 90,
+    "सौ": 100, "हजार": 1000, "हज़ार": 1000
+  };
+
+  let total = 0;
+  const words = text.toLowerCase().split(/\s+/);
+  for (let i = 0; i < words.length; i++) {
+    const w = words[i];
+    if (numMap[w] !== undefined) {
+      if (numMap[w] === 100 && total > 0) {
+        total = total * 100;
+      } else if (numMap[w] === 1000 && total > 0) {
+        total = total * 1000;
+      } else {
+        total += numMap[w];
+      }
+    }
+  }
+  return total;
+}
+
 // Reusable Custom Searchable Select for Customers
 function SearchableSelect({ items, selectedId, onChange, placeholder, inputRef, onSelectNext }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -170,6 +211,7 @@ export default function App() {
   const [customerTranslations, setCustomerTranslations] = useState({});
 
   const customerInputRef = useRef(null);
+  const recognitionRef = useRef(null);
   const commonQtyInputRef = useRef(null);
   const specialSearchInputRef = useRef(null);
 
@@ -298,8 +340,6 @@ export default function App() {
           name === "sachin"
         ) {
           activeCommonRate = 3;
-        } else if (name === "umesh") {
-          activeCommonRate = 3.5;
         }
       }
     }
@@ -438,6 +478,144 @@ export default function App() {
     return () => window.removeEventListener("keydown", handleGlobalKeyDown);
   }, [view, entryLaundry, entryDate, commonQty, itemQtys]);
 
+  const [isListening, setIsListening] = useState(false);
+  const [voiceMessage, setVoiceMessage] = useState("");
+
+  const startVoiceRecognition = () => {
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceMessage("Voice Not Supported / कृपया Chrome या Safari का उपयोग करें");
+      return;
+    }
+
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onstart = null;
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.abort();
+      } catch (e) {}
+      recognitionRef.current = null;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      setVoiceMessage("Mic stopped / माइक बंद किया गया");
+      return;
+    }
+
+    setIsListening(true);
+    setVoiceMessage("Listening... बोलिए (उदा. 'प्रकाश 350') 🎙️");
+
+    setTimeout(() => {
+      try {
+        const recognition = new SpeechRecognition();
+        recognitionRef.current = recognition;
+        recognition.lang = "hi-IN";
+        recognition.interimResults = false;
+        recognition.continuous = false;
+        recognition.maxAlternatives = 3;
+
+        recognition.onstart = () => {
+          setIsListening(true);
+        };
+
+        recognition.onresult = (event) => {
+          if (event.results && event.results.length > 0) {
+            const transcript = event.results[0][0].transcript;
+            processVoiceTranscript(transcript);
+          }
+        };
+
+        recognition.onerror = (event) => {
+          console.warn("Speech Recognition Error:", event.error);
+          setIsListening(false);
+          recognitionRef.current = null;
+          if (event.error === "no-speech") {
+            setVoiceMessage("No speech heard / कोई आवाज़ नहीं मिली (दोबारा माइक दबाएं)");
+          } else if (event.error === "not-allowed") {
+            setVoiceMessage("Mic permission denied / माइक परमिशन नहीं मिली");
+          } else if (event.error !== "aborted") {
+            setVoiceMessage(`Mic error: ${event.error}`);
+          }
+        };
+
+        recognition.onend = () => {
+          setIsListening(false);
+          recognitionRef.current = null;
+        };
+
+        recognition.start();
+      } catch (e) {
+        console.error("Start speech error:", e);
+        setIsListening(false);
+        setVoiceMessage("Could not start mic. Tap again.");
+        recognitionRef.current = null;
+      }
+    }, 150);
+  };
+
+  const processVoiceTranscript = (rawText) => {
+    if (!rawText) return;
+    const text = rawText.trim();
+
+    // Match customer name
+    let matchedCust = null;
+    let maxMatchLen = 0;
+
+    for (const cust of customers) {
+      const nameEn = cust.name.toLowerCase();
+      const nameHi = (customerTranslations[cust._id] || "").toLowerCase();
+
+      if (text.toLowerCase().includes(nameEn) && nameEn.length > maxMatchLen) {
+        matchedCust = cust;
+        maxMatchLen = nameEn.length;
+      }
+      if (nameHi && text.toLowerCase().includes(nameHi) && nameHi.length > maxMatchLen) {
+        matchedCust = cust;
+        maxMatchLen = nameHi.length;
+      }
+    }
+
+    if (matchedCust) {
+      setEntryLaundry(matchedCust._id);
+    }
+
+    // Extract common quantity or numbers
+    const digits = text.match(/\d+/g);
+    if (digits && digits.length > 0) {
+      const mainQty = parseInt(digits[0], 10);
+      setCommonQty(mainQty);
+    } else {
+      const parsedNum = parseHindiNumber(text);
+      if (parsedNum > 0) {
+        setCommonQty(parsedNum);
+      }
+    }
+
+    // Match special items
+    const newItems = {};
+    for (const rate of rates) {
+      const itemEn = rate.en.toLowerCase();
+      const itemHi = rate.hi.toLowerCase();
+      if (text.toLowerCase().includes(itemEn) || text.toLowerCase().includes(itemHi)) {
+        newItems[rate._id] = 1;
+      }
+    }
+    if (Object.keys(newItems).length > 0) {
+      setItemQtys((prev) => ({ ...prev, ...newItems }));
+    }
+
+    const matchedName = matchedCust
+      ? (customerTranslations[matchedCust._id] || matchedCust.name)
+      : "Not matched / नाम नहीं मिला";
+
+    setVoiceMessage(`Heard: "${text}" ➔ Customer: ${matchedName}`);
+  };
+
   const handleGenerateBill = async () => {
     if (!billLaundry) return;
     const isRange = !!(billStartDate && billEndDate);
@@ -529,8 +707,6 @@ export default function App() {
           nameLower === "sachin"
         ) {
           activeCommonRate = 3;
-        } else if (nameLower === "umesh") {
-          activeCommonRate = 3.5;
         }
 
         if (commonQty > 0 && common) {
@@ -1240,7 +1416,88 @@ export default function App() {
 
       {view === "entry" && (
         <section className="card">
-          <div className="card-title">New Entry / नई एंट्री</div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              marginBottom: 16,
+            }}
+          >
+            <div className="card-title" style={{ margin: 0 }}>
+              New Entry / नई एंट्री
+            </div>
+            <button
+              type="button"
+              className={`small-btn ${isListening ? "danger-btn" : "secondary"}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                fontSize: 12,
+                borderRadius: 20,
+                background: isListening
+                  ? "#ef4444"
+                  : "var(--primary-light, #e0e7ff)",
+                color: isListening ? "#fff" : "var(--primary, #4338ca)",
+                border: "none",
+                fontWeight: "bold",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onClick={startVoiceRecognition}
+            >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+              >
+                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="22" />
+              </svg>
+              {isListening ? "Listening... / बोलिए..." : "Voice Mic / बोलकर लिखें 🎤"}
+            </button>
+          </div>
+
+          {voiceMessage && (
+            <div
+              style={{
+                background: isListening ? "#fef2f2" : "#f0fdf4",
+                border: `1px solid ${isListening ? "#fca5a5" : "#86efac"}`,
+                color: isListening ? "#991b1b" : "#166534",
+                padding: "8px 12px",
+                borderRadius: "8px",
+                fontSize: "13px",
+                fontWeight: "600",
+                marginBottom: "14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <span>{voiceMessage}</span>
+              <button
+                type="button"
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: "bold",
+                  color: "inherit",
+                  fontSize: "14px",
+                  padding: "0 4px",
+                }}
+                onClick={() => setVoiceMessage("")}
+              >
+                ✕
+              </button>
+            </div>
+          )}
 
           <label className="label">Laundry / लॉन्ड्री (type to search)</label>
           <SearchableSelect

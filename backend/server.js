@@ -43,7 +43,7 @@ const Entry = mongoose.model("Entry", EntrySchema);
 
 const defaultSeed = {
   customers: ["prakash", "umesh", "bihari", "ramji"],
-  common: { label: "Common", rate: 5 },
+  common: { label: "Common", rate: 4 },
   rates: [
     { en: "Saree", hi: "साड़ी", rate: 15 },
     { en: "Dhoti", hi: "धोती", rate: 12 },
@@ -307,8 +307,6 @@ app.get("/api/bill", async (req, res) => {
       name === "sachin"
     ) {
       activeCommonRate = 3;
-    } else if (name === "umesh") {
-      activeCommonRate = 3.5;
     }
   }
 
