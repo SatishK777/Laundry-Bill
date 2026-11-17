@@ -195,6 +195,7 @@ export default function App() {
   const [billMonth, setBillMonth] = useState("");
   const [billStartDate, setBillStartDate] = useState("");
   const [billEndDate, setBillEndDate] = useState("");
+  const [billNote, setBillNote] = useState("");
   const [entryLaundry, setEntryLaundry] = useState("");
   const [billLaundry, setBillLaundry] = useState("");
   const [entrySearch, setEntrySearch] = useState("");
@@ -650,6 +651,7 @@ export default function App() {
       setBill({
         ...data,
         customerHi: hiName,
+        note: billNote,
       });
       setBillMode("single");
       setBillsList([]);
@@ -746,6 +748,7 @@ export default function App() {
           endDate: isRange ? billEndDate : null,
           rows,
           totalAmount,
+          note: billNote,
         };
       });
 
@@ -1713,6 +1716,14 @@ export default function App() {
             </div>
           </div>
 
+          <label className="label">Note / नोट (Optional)</label>
+          <input
+            type="text"
+            placeholder="Type note to print on bill... / बिल पर नोट लिखें..."
+            value={billNote}
+            onChange={(e) => setBillNote(e.target.value)}
+          />
+
           <div className="button-grid">
             <button className="primary" onClick={handleGenerateBill}>
               <svg
@@ -1817,6 +1828,24 @@ export default function App() {
               >
                 Total / कुल: {money(bill.totalAmount)}
               </div>
+              {(bill.note || billNote) && (
+                <div
+                  className="bill-note"
+                  style={{
+                    borderTop: "1px dashed black",
+                    marginTop: "8px",
+                    paddingTop: "6px",
+                    textAlign: "left",
+                    fontSize: "12px",
+                    fontWeight: "bold",
+                    color: "#000",
+                    wordBreak: "break-word",
+                  }}
+                >
+                  <span style={{ fontWeight: "800" }}>Note / नोट:</span>{" "}
+                  {bill.note || billNote}
+                </div>
+              )}
               <button
                 className="secondary full"
                 onClick={handlePrintSingleBill}
@@ -1956,6 +1985,24 @@ export default function App() {
                           >
                             Total / कुल: {money(singleBill.totalAmount)}
                           </div>
+                          {(singleBill.note || billNote) && (
+                            <div
+                              className="bill-note"
+                              style={{
+                                borderTop: "1px dashed black",
+                                marginTop: "6px",
+                                paddingTop: "4px",
+                                textAlign: "left",
+                                fontSize: "11px",
+                                fontWeight: "bold",
+                                color: "#000",
+                                wordBreak: "break-word",
+                              }}
+                            >
+                              <span style={{ fontWeight: "800" }}>Note / नोट:</span>{" "}
+                              {singleBill.note || billNote}
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
